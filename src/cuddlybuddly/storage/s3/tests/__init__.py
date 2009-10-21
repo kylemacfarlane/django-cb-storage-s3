@@ -8,18 +8,31 @@ from django.utils.http import urlquote_plus
 from cuddlybuddly.storage.s3.tests.s3test import TestAWSAuthConnection, TestQueryStringAuthGenerator
 
 
+MEDIA_ROOT = settings.MEDIA_ROOT.replace('\\', '/')
+if not MEDIA_ROOT.startswith('/'):
+    MEDIA_ROOT = '/'+MEDIA_ROOT
+MEDIA_URL = settings.MEDIA_URL
+if not MEDIA_URL.endswith('/'):
+    MEDIA_URL = MEDIA_URL+'/'
+
+
 class S3StorageTests(TestCase):
     def run_test(self, filename):
         default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
         self.assert_(default_storage.exists(filename))
-        self.assert_(default_storage.exists(os.path.join(settings.MEDIA_ROOT, filename)))
+        self.assert_(default_storage.exists(os.path.join(MEDIA_ROOT, filename)))
 
         self.assertEqual(default_storage.size(filename), 26)
         file = default_storage.open(filename)
         self.assertEqual(file.size, 26)
-        fileurl = force_unicode(file).replace(settings.MEDIA_ROOT, '')
+        fileurl = force_unicode(file)
+        if MEDIA_ROOT and MEDIA_ROOT != '/':
+            fileurl = fileurl.replace(MEDIA_ROOT, '')
+        fileurl = urlquote_plus(fileurl, '/')
+        if fileurl.startswith('/'):
+            fileurl = fileurl[1:]
         self.assertEqual(
-            settings.MEDIA_URL+urlquote_plus(fileurl, '/'),
+            MEDIA_URL+fileurl,
             default_storage.url(filename)
         )
         file.close()
@@ -28,7 +41,7 @@ class S3StorageTests(TestCase):
         self.assert_(not default_storage.exists(filename))
 
     def test_absolute_path(self):
-        self.run_test(os.path.join(settings.MEDIA_ROOT, 'testsdir/file1.txt'))
+        self.run_test(os.path.join(MEDIA_ROOT, 'testsdir/file1.txt'))
 
     def test_relative_path(self):
         self.run_test('testsdir/file2.txt')
@@ -55,7 +68,7 @@ class S3StorageTests(TestCase):
             self.assert_(not default_storage.exists(file))
 
     def test_listdir_absolute_path(self):
-        self.run_listdir_test(os.path.join(settings.MEDIA_ROOT, 'testsdir'))
+        self.run_listdir_test(os.path.join(MEDIA_ROOT, 'testsdir'))
 
     def test_listdir_relative_path(self):
         self.run_listdir_test('testsdir')
