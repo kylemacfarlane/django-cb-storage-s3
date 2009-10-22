@@ -129,7 +129,6 @@ class S3Storage(Storage):
         return directories, files
 
     def _path(self, name):
-        name = os.path.join(settings.MEDIA_ROOT, name)
         name = name.replace('\\', '/')
         # Because the S3 lib just loves to add slashes
         if name.startswith('/'):

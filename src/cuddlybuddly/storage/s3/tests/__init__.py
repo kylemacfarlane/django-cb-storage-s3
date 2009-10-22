@@ -20,7 +20,6 @@ class S3StorageTests(TestCase):
     def run_test(self, filename):
         default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
         self.assert_(default_storage.exists(filename))
-        self.assert_(default_storage.exists(os.path.join(MEDIA_ROOT, filename)))
 
         self.assertEqual(default_storage.size(filename), 26)
         file = default_storage.open(filename)
@@ -41,7 +40,7 @@ class S3StorageTests(TestCase):
         self.assert_(not default_storage.exists(filename))
 
     def test_absolute_path(self):
-        self.run_test(os.path.join(MEDIA_ROOT, 'testsdir/file1.txt'))
+        self.run_test('/testsdir/file1.txt')
 
     def test_relative_path(self):
         self.run_test('testsdir/file2.txt')
@@ -59,7 +58,9 @@ class S3StorageTests(TestCase):
         dirs, files = default_storage.listdir(folder)
         self.assertEqual(dirs, ['sub'])
         self.assertEqual(files, ['file3.txt', 'file4.txt'])
-        dirs, files = default_storage.listdir(folder+'/'+dirs[0])
+        if not folder.endswith('/'):
+            folder = folder+'/'
+        dirs, files = default_storage.listdir(folder+dirs[0])
         self.assertEqual(dirs, [])
         self.assertEqual(files, ['file5.txt'])
 
@@ -68,7 +69,10 @@ class S3StorageTests(TestCase):
             self.assert_(not default_storage.exists(file))
 
     def test_listdir_absolute_path(self):
-        self.run_listdir_test(os.path.join(MEDIA_ROOT, 'testsdir'))
+        self.run_listdir_test('/testsdir')
 
     def test_listdir_relative_path(self):
         self.run_listdir_test('testsdir')
+
+    def test_listdir_ending_slash(self):
+        self.run_listdir_test('testsdir/')
