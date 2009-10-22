@@ -8,9 +8,6 @@ from django.utils.http import urlquote_plus
 from cuddlybuddly.storage.s3.tests.s3test import TestAWSAuthConnection, TestQueryStringAuthGenerator
 
 
-MEDIA_ROOT = settings.MEDIA_ROOT.replace('\\', '/')
-if not MEDIA_ROOT.startswith('/'):
-    MEDIA_ROOT = '/'+MEDIA_ROOT
 MEDIA_URL = settings.MEDIA_URL
 if not MEDIA_URL.endswith('/'):
     MEDIA_URL = MEDIA_URL+'/'
@@ -25,8 +22,6 @@ class S3StorageTests(TestCase):
         file = default_storage.open(filename)
         self.assertEqual(file.size, 26)
         fileurl = force_unicode(file).replace('\\', '/')
-        if MEDIA_ROOT and MEDIA_ROOT != '/':
-            fileurl = fileurl.replace(MEDIA_ROOT, '')
         fileurl = urlquote_plus(fileurl, '/')
         if fileurl.startswith('/'):
             fileurl = fileurl[1:]
