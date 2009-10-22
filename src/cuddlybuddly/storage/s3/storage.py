@@ -1,5 +1,7 @@
+from email.utils import parsedate
 import os
 import mimetypes
+from time import mktime
 
 try:
     from cStringIO import StringIO
@@ -107,6 +109,13 @@ class S3Storage(Storage):
         response = self.connection._make_request('HEAD', self.bucket, name)
         content_length = response.getheader('Content-Length')
         return content_length and int(content_length) or 0
+
+    def getmtime(self, name):
+        name = self._path(name)
+        response = self.connection._make_request('HEAD', self.bucket, name)
+        last_modified = response.getheader('Last-Modified')
+        last_modified = mktime(parsedate(last_modified))
+        return last_modified
 
     def url(self, name):
         name = self._path(name)

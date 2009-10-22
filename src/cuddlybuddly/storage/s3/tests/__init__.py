@@ -1,4 +1,5 @@
-import os
+from datetime import datetime, timedelta
+from time import mktime
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -19,6 +20,11 @@ class S3StorageTests(TestCase):
         self.assert_(default_storage.exists(filename))
 
         self.assertEqual(default_storage.size(filename), 26)
+        now = datetime.utcnow()
+        delta = timedelta(minutes=5)
+        mtime = default_storage.getmtime(filename)
+        self.assert_(mtime > mktime((now - delta).timetuple()))
+        self.assert_(mtime < mktime((now + delta).timetuple()))
         file = default_storage.open(filename)
         self.assertEqual(file.size, 26)
         fileurl = force_unicode(file).replace('\\', '/')
