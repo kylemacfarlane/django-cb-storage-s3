@@ -12,7 +12,7 @@ DATABASE_NAME = os.path.join(TEMP, 's3.db')
 INSTALLED_APPS = [
     'cuddlybuddly.storage.s3'
 ]
-MEDIA_ROOT = 'media/'
+MEDIA_ROOT = 'media'
 
 DEFAULT_FILE_STORAGE = 'cuddlybuddly.storage.s3.S3Storage'
 from cuddlybuddly.storage.s3 import CallingFormat

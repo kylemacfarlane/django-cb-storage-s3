@@ -25,7 +25,7 @@ class S3StorageTests(TestCase):
         self.assertEqual(default_storage.size(filename), 26)
         file = default_storage.open(filename)
         self.assertEqual(file.size, 26)
-        fileurl = force_unicode(file)
+        fileurl = force_unicode(file).replace('\\', '/')
         if MEDIA_ROOT and MEDIA_ROOT != '/':
             fileurl = fileurl.replace(MEDIA_ROOT, '')
         fileurl = urlquote_plus(fileurl, '/')

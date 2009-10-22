@@ -20,7 +20,7 @@ Notes on ``MEDIA_ROOT``
 
 Most S3 storage systems I've seen totally ignore the ``MEDIA_ROOT`` setting, but that results in accessing files behaving differently from the default ``FileSystemStorage`` and you can't have publicly accessible and private files in the same bucket (and none of these storages have any kind of multiple bucket support either).
 
-I like to set ``MEDIA_ROOT`` to a relative path such as ``media/`` because then it also works on the local disk. I can then store CSS and so on in a version controlled folder beside ``settings.py`` in my project folder and have things such as ``django-compress`` and the ``sync_media_s3`` command from ``django-command-extensions`` work correctly.
+I like to set ``MEDIA_ROOT`` to a relative path such as ``media`` because then it also works on the local disk. I can then store CSS and so on in a version controlled folder beside ``settings.py`` in my project folder and have things such as ``django-compress`` and the ``sync_media_s3`` command from ``django-command-extensions`` work correctly.
 
 
 Settings
