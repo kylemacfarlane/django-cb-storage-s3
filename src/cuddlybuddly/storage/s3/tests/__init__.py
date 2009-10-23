@@ -20,7 +20,7 @@ if not MEDIA_URL.endswith('/'):
 
 class S3StorageTests(TestCase):
     def run_test(self, filename):
-        default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
+        filename = default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
         self.assert_(default_storage.exists(filename))
 
         self.assertEqual(default_storage.size(filename), 26)
@@ -52,6 +52,21 @@ class S3StorageTests(TestCase):
 
     def test_unicode(self):
         self.run_test(u'testsdir/\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
+
+    def test_write_to_file(self):
+        filename = 'file6.txt'
+        default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
+        self.assert_(default_storage.exists(filename))
+
+        file = default_storage.open(filename, 'w')
+        self.assertEqual(file.size, 26)
+
+        file.write('Lorem ipsum')
+        file.close()
+        self.assertEqual(file.size, 11)
+
+        default_storage.delete(filename)
+        self.assert_(not default_storage.exists(filename))
 
     def run_listdir_test(self, folder):
         content = ('testsdir/file3.txt', 'testsdir/file4.txt',

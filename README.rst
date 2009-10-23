@@ -2,7 +2,7 @@
 django-cuddlybuddly-storage-s3
 ===============================
 
-Updated Amazon S3 storage from django-storages.
+Updated Amazon S3 storage from django-storages. Adds more fixes than I can remember, a metadata cache system and some extra utilities.
 
 
 Installation
@@ -51,6 +51,30 @@ Optional. If you'd like to set headers sent with each file of the storage::
         'Expires': 'Thu, 15 Apr 2010 20:00:00 GMT',
         'Cache-Control': 'max-age=86400',
     }
+
+
+Cache
+=====
+
+Included is a cache system to store file metadata to speed up accessing file metadata such as size and the last modified time. It is disabled by edeafult.
+
+``FileSystemCache``
+-------------------
+
+The only included cache system is ``FileSystemStorage`` that stores the cache on the local disk. To use it, add the following to your settings file::
+
+    CUDDLYBUDDLY_STORAGE_S3_CACHE = 'cuddlybuddly.storage.s3.cache.FileSystemCache'
+    CUDDLYBUDDLY_STORAGE_S3_FILE_CACHE_DIR  = '/location/to/store/cache'
+
+Custom Cache
+------------
+
+To create your own cache system, inherit from ``cuddlybuddly.storage.s3.cache.Cache`` and implement the following methods:
+
+* exists
+* getmtime
+* size
+* store
 
 
 Utilities

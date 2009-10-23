@@ -9,8 +9,10 @@ except ImportError:
     from StringIO import StringIO
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.core.files.storage import Storage
+from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection, QueryStringAuthGenerator
 
 ACCESS_KEY_NAME = 'AWS_ACCESS_KEY_ID'
@@ -22,7 +24,7 @@ class S3Storage(Storage):
     """Amazon Simple Storage Service"""
 
     def __init__(self, bucket=None, access_key=None, secret_key=None, acl=None,
-            calling_format=None):
+            calling_format=None, cache=None):
         if bucket is None:
             bucket = settings.AWS_STORAGE_BUCKET_NAME
         if acl is None:
@@ -43,6 +45,30 @@ class S3Storage(Storage):
         self.generator.set_expires_in(getattr(settings, 'AWS_QUERYSTRING_EXPIRE', 60))
 
         self.headers = getattr(settings, HEADERS, {})
+
+        if cache is not None:
+            self.cache = cache
+        else:
+            cache = getattr(settings, 'CUDDLYBUDDLY_STORAGE_S3_CACHE', None)
+            if cache is not None:
+                self.cache = self._get_cache_class(cache)()
+            else:
+                self.cache = None
+
+    def _get_cache_class(self, import_path=None):
+        try:
+            dot = import_path.rindex('.')
+        except ValueError:
+            raise ImproperlyConfigured("%s isn't a cache module." % import_path)
+        module, classname = import_path[:dot], import_path[dot+1:]
+        try:
+            mod = import_module(module)
+        except ImportError, e:
+            raise ImproperlyConfigured('Error importing cache module %s: "%s"' % (module, e))
+        try:
+            return getattr(mod, classname)
+        except AttributeError:
+            raise ImproperlyConfigured('Cache module "%s" does not define a "%s" class.' % (module, classname))
 
     def _get_access_keys(self):
         access_key = getattr(settings, ACCESS_KEY_NAME, None)
@@ -67,6 +93,10 @@ class S3Storage(Storage):
         response = self.connection.put(self.bucket, name, content, self.headers)
         if response.http_response.status != 200:
             raise IOError("S3StorageError: %s" % response.message)
+        if self.cache:
+            date = response.http_response.getheader('Date')
+            date = mktime(parsedate(date))
+            self.cache.store(name, size=len(content), getmtime=date)
 
     def _open(self, name, mode='rb'):
         remote_file = S3StorageFile(name, self, mode=mode)
@@ -101,17 +131,29 @@ class S3Storage(Storage):
 
     def exists(self, name):
         name = self._path(name)
+        if self.cache:
+            exists = self.cache.exists(name)
+            if exists is not None:
+                return exists
         response = self.connection._make_request('HEAD', self.bucket, name)
         return response.status == 200
 
     def size(self, name):
         name = self._path(name)
+        if self.cache:
+            size = self.cache.size(name)
+            if size is not None:
+                return size
         response = self.connection._make_request('HEAD', self.bucket, name)
         content_length = response.getheader('Content-Length')
         return content_length and int(content_length) or 0
 
     def getmtime(self, name):
         name = self._path(name)
+        if self.cache:
+            last_modified = self.cache.getmtime(name)
+            if last_modified is not None:
+                return last_modified
         response = self.connection._make_request('HEAD', self.bucket, name)
         last_modified = response.getheader('Last-Modified')
         last_modified = mktime(parsedate(last_modified))
@@ -183,4 +225,5 @@ class S3StorageFile(File):
     def close(self):
         if self._is_dirty:
             self._storage._put_file(self.name, self.file.getvalue())
+            del self.__dict__['_size']
         self.file.close()
