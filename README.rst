@@ -59,7 +59,7 @@ Utilities
 create_signed_url(file, expires=60, secure=False)
 -------------------------------------------------
 
-Creates a signed URL to ``file`` that will expire in ``expires`` seconds. Setting ``secure`` to ``True`` will result in an ``https`` links being returned.
+Creates a signed URL to ``file`` that will expire in ``expires`` seconds. If ``secure`` is set to ``True`` an ``https`` link will be returned.
 
 To import it::
 
