@@ -51,3 +51,16 @@ Optional. If you'd like to set headers sent with each file of the storage::
         'Expires': 'Thu, 15 Apr 2010 20:00:00 GMT',
         'Cache-Control': 'max-age=86400',
     }
+
+
+Utilities
+=========
+
+create_signed_url(file, expires=60, secure=False)
+-------------------------------------------------
+
+Creates a signed URL to ``file`` that will expire in ``expires`` seconds. Setting ``secure`` to ``True`` will result in an ``https`` links being returned.
+
+To import it::
+
+    from cuddlybuddly.storage.s3.utils import create_signed_url

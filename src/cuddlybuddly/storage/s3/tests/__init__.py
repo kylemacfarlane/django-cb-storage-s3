@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta
-from time import mktime
+import httplib
+from time import mktime, sleep
+from urlparse import urlparse
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import TestCase
 from django.utils.encoding import force_unicode
 from django.utils.http import urlquote_plus
+from cuddlybuddly.storage.s3 import lib
 from cuddlybuddly.storage.s3.tests.s3test import TestAWSAuthConnection, TestQueryStringAuthGenerator
+from cuddlybuddly.storage.s3.utils import create_signed_url
 
 
 MEDIA_URL = settings.MEDIA_URL
@@ -77,3 +81,49 @@ class S3StorageTests(TestCase):
 
     def test_listdir_ending_slash(self):
         self.run_listdir_test('testsdir/')
+
+
+class SignedURLTests(TestCase):
+    def setUp(self):
+        self.conn = lib.AWSAuthConnection(
+            settings.AWS_ACCESS_KEY_ID,
+            settings.AWS_SECRET_ACCESS_KEY
+        )
+
+    def get_url(self, url):
+        url = urlparse(url)
+        if url.scheme == 'https':
+            conn = httplib.HTTPSConnection(url.netloc)
+        else:
+            conn = httplib.HTTPConnection(url.netloc)
+        path = url.path
+        if url.query:
+            path = path+'?'+url.query
+        conn.request('GET', path)
+        return conn.getresponse()
+
+    def run_test_signed_url(self, filename):
+        response = self.conn.put(
+            settings.AWS_STORAGE_BUCKET_NAME,
+            filename,
+            'Lorem ipsum dolor sit amet.',
+            {'x-amz-acl': 'private'}
+        )
+        self.assertEquals(response.http_response.status, 200, 'put with a string argument')
+        response = self.get_url(default_storage.url(filename))
+        self.assertEqual(response.status, 403)
+
+        signed_url = create_signed_url(filename, expires=5, secure=True)
+        response = self.get_url(signed_url)
+        self.assertEqual(response.status, 200)
+        sleep(6)
+        response = self.get_url(signed_url)
+        self.assertEqual(response.status, 403)
+
+        default_storage.delete(filename)
+
+    def test_signed_url(self):
+        self.run_test_signed_url('testprivatefile.txt')
+
+    def test_signed_url_with_unicode(self):
+        self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
