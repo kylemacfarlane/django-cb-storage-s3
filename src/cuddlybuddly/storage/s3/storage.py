@@ -72,6 +72,12 @@ class S3Storage(Storage):
         except AttributeError:
             raise ImproperlyConfigured('Cache module "%s" does not define a "%s" class.' % (module, classname))
 
+    def _store_in_cache(self, name, response):
+        size = int(response.getheader('Content-Length'))
+        date = response.http_response.getheader('Date')
+        date = mktime(parsedate(date))
+        self.cache.save(name, size=size, getmtime=date)
+
     def _get_access_keys(self):
         access_key = getattr(settings, ACCESS_KEY_NAME, None)
         secret_key = getattr(settings, SECRET_KEY_NAME, None)
@@ -145,6 +151,8 @@ class S3Storage(Storage):
             if exists is not None:
                 return exists
         response = self.connection._make_request('HEAD', self.bucket, name)
+        if self.cache:
+            self._store_in_cache(name, response)
         return response.status == 200
 
     def size(self, name):
@@ -155,6 +163,8 @@ class S3Storage(Storage):
                 return size
         response = self.connection._make_request('HEAD', self.bucket, name)
         content_length = response.getheader('Content-Length')
+        if self.cache:
+            self._store_in_cache(name, response)
         return content_length and int(content_length) or 0
 
     def getmtime(self, name):
@@ -166,6 +176,8 @@ class S3Storage(Storage):
         response = self.connection._make_request('HEAD', self.bucket, name)
         last_modified = response.getheader('Last-Modified')
         last_modified = mktime(parsedate(last_modified))
+        if self.cache:
+            self._store_in_cache(name, response)
         return last_modified
 
     def url(self, name):

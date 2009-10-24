@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = 'django-cuddlybuddly-storage-s3',
-    version = '1.1.3',
+    version = '1.1.4',
     license = 'BSD',
     description = 'Updated Amazon S3 storage from django-storages.',
     long_description = read('README.rst'),
