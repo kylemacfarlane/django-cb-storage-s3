@@ -61,7 +61,7 @@ Included is a cache system to store file metadata to speed up accessing file met
 ``FileSystemCache``
 -------------------
 
-The only included cache system is ``FileSystemStorage`` that stores the cache on the local disk. To use it, add the following to your settings file::
+The only included cache system is ``FileSystemCache`` that stores the cache on the local disk. To use it, add the following to your settings file::
 
     CUDDLYBUDDLY_STORAGE_S3_CACHE = 'cuddlybuddly.storage.s3.cache.FileSystemCache'
     CUDDLYBUDDLY_STORAGE_S3_FILE_CACHE_DIR  = '/location/to/store/cache'
@@ -80,11 +80,30 @@ To create your own cache system, inherit from ``cuddlybuddly.storage.s3.cache.Ca
 Utilities
 =========
 
-create_signed_url(file, expires=60, secure=False)
--------------------------------------------------
+``create_signed_url(file, expires=60, secure=False)``
+-----------------------------------------------------
 
 Creates a signed URL to ``file`` that will expire in ``expires`` seconds. If ``secure`` is set to ``True`` an ``https`` link will be returned.
 
 To import it::
 
     from cuddlybuddly.storage.s3.utils import create_signed_url
+
+
+``cuddlybuddly.storage.s3.context_processors.media``
+----------------------------------------------------
+
+This context processor returns ``MEDIA_URL`` with the protocol set to either ``http`` or ``https`` depending on how the page was requested. This is useful since you can't use a relative URL with S3.
+
+``CloudFrontURLs(cnames, https=None)``
+--------------------------------------
+
+Use this with the above context processor to return varying ``MEDIA_URLS``. Do the following in your settings file::
+
+    from cuddlybuddly.storage.s3.utils import CloudFrontURLs
+    MEDIA_URL = CloudFrontURLs((
+        'http://cdn1.example.com',
+        'http://cdn2.example.com',
+        'http://cdn3.example.com',
+        'http://cdn4.example.com'
+        ), https='https://yourbucket.s3.amazonaws.com')
