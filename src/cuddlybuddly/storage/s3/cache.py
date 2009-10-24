@@ -1,6 +1,7 @@
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import smart_str
 from django.utils.hashcompat import md5_constructor
 
 
@@ -60,7 +61,7 @@ class FileSystemCache(Cache):
         self.cache_dir = cache_dir
 
     def _path(self, name):
-        return os.path.join(self.cache_dir, md5_constructor(name).hexdigest())
+        return os.path.join(self.cache_dir, md5_constructor(smart_str(name)).hexdigest())
 
     def exists(self, name):
         return None
@@ -87,7 +88,7 @@ class FileSystemCache(Cache):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
         file = open(self._path(name), 'w')
-        file.write(str(name)+'\n'+str(size)+'\n'+str(getmtime))
+        file.write(smart_str(name)+'\n'+str(size)+'\n'+str(getmtime))
         file.close()
 
     def remove(self, name):

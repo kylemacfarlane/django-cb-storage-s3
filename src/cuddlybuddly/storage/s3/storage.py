@@ -74,7 +74,7 @@ class S3Storage(Storage):
 
     def _store_in_cache(self, name, response):
         size = int(response.getheader('Content-Length'))
-        date = response.http_response.getheader('Date')
+        date = response.getheader('Last-Modified')
         date = mktime(parsedate(date))
         self.cache.save(name, size=size, getmtime=date)
 
@@ -143,6 +143,8 @@ class S3Storage(Storage):
         response = self.connection.delete(self.bucket, name)
         if response.http_response.status != 204:
             raise IOError("S3StorageError: %s" % response.message)
+        if self.cache:
+            self.cache.remove(name)
 
     def exists(self, name):
         name = self._path(name)
@@ -151,9 +153,10 @@ class S3Storage(Storage):
             if exists is not None:
                 return exists
         response = self.connection._make_request('HEAD', self.bucket, name)
-        if self.cache:
+        exists = response.status == 200
+        if self.cache and exists:
             self._store_in_cache(name, response)
-        return response.status == 200
+        return exists
 
     def size(self, name):
         name = self._path(name)
