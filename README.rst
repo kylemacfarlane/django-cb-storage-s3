@@ -9,7 +9,7 @@ Installation
 ============
 
 1. Add ``cuddlybuddly.storage.s3`` to your ``INSTALLED_APPS``.
-2. Set ``DEFAULT_STORAGE`` to ``cuddlybuddly.storage.s3.S3Storage`` (as a string, don't import it).
+2. Set ``DEFAULT_FILE_STORAGE`` to ``cuddlybuddly.storage.s3.S3Storage`` (as a string, don't import it).
 3. Set ``MEDIA_URL`` to your bucket URL , e.g. ``http://yourbucket.s3.amazonaws.com/``.
 4. Enter your AWS credentials in the settings below.
 
