@@ -3,7 +3,7 @@ from django.conf import settings
 
 def media(request):
     if request.is_secure() or \
-       getattr(request.meta, 'http_x_forwarded_ssl', 'off') == 'on':
+       getattr(request.META, 'HTTP_X_FORWARDED_SSL', 'off') == 'on':
         if hasattr(settings.MEDIA_URL, 'https'):
             url = settings.MEDIA_URL.https()
         else:
