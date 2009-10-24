@@ -27,4 +27,4 @@ AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
 from cuddlybuddly.storage.s3.tests3credentials import *
 
 CUDDLYBUDDLY_STORAGE_S3_CACHE = 'cuddlybuddly.storage.s3.cache.FileSystemCache'
-CUDDLYBUDDLY_STORAGE_S3_FILE_CACHE_DIR  = TEMP+'/cbttestcache'
+CUDDLYBUDDLY_STORAGE_S3_FILE_CACHE_DIR = TEMP+'/cbttestcache'

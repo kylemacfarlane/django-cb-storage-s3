@@ -93,7 +93,7 @@ class S3Storage(Storage):
         placeholder = False
         if self.cache:
             if not self.cache.exists(name):
-                self.cach.save(name, 0, 0)
+                self.cache.save(name, 0, 0)
                 placedholder = True
         content_type = mimetypes.guess_type(name)[0] or "application/x-octet-stream"
         self.headers.update({'x-amz-acl': self.acl, 'Content-Type': content_type})
