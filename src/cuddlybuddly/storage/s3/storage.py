@@ -13,6 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.core.files.storage import Storage
 from django.utils.importlib import import_module
+from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection, QueryStringAuthGenerator
 
 ACCESS_KEY_NAME = 'AWS_ACCESS_KEY_ID'
@@ -30,7 +31,8 @@ class S3Storage(Storage):
         if acl is None:
             acl = getattr(settings, 'AWS_DEFAULT_ACL', 'public-read')
         if calling_format is None:
-           calling_format = settings.AWS_CALLING_FORMAT
+           calling_format = getattr(settings, 'AWS_CALLING_FORMAT',
+                                    CallingFormat.SUBDOMAIN)
         self.bucket = bucket
         self.acl = acl
 
