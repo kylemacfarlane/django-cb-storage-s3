@@ -88,15 +88,22 @@ class S3Storage(Storage):
 
     def _put_file(self, name, content):
         name = self._path(name)
+        placeholder = False
+        if self.cache:
+            if not self.cache.exists(name):
+                self.cach.save(name, 0, 0)
+                placedholder = True
         content_type = mimetypes.guess_type(name)[0] or "application/x-octet-stream"
         self.headers.update({'x-amz-acl': self.acl, 'Content-Type': content_type})
         response = self.connection.put(self.bucket, name, content, self.headers)
         if response.http_response.status != 200:
+            if placeholder:
+                self.cache.remove(name)
             raise IOError("S3StorageError: %s" % response.message)
         if self.cache:
             date = response.http_response.getheader('Date')
             date = mktime(parsedate(date))
-            self.cache.store(name, size=len(content), getmtime=date)
+            self.cache.save(name, size=len(content), getmtime=date)
 
     def _open(self, name, mode='rb'):
         remote_file = S3StorageFile(name, self, mode=mode)

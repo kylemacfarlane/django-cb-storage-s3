@@ -36,9 +36,15 @@ class Cache(object):
         """
         raise NotImplementedError()
 
-    def store(self, name, size, getmtime):
+    def save(self, name, size, getmtime):
         """
-        Store the values in the cache.
+        Save the values to the cache.
+        """
+        raise NotImplementedError()
+
+    def remove(self, name):
+        """
+        Remove the values from the cache.
         """
         raise NotImplementedError()
 
@@ -77,9 +83,14 @@ class FileSystemCache(Cache):
             mtime = None
         return mtime
 
-    def store(self, name, size, getmtime):
+    def save(self, name, size, getmtime):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
         file = open(self._path(name), 'w')
         file.write(str(name)+'\n'+str(size)+'\n'+str(getmtime))
         file.close()
+
+    def remove(self, name):
+        name = self._path(name)
+        if os.path.exists(name):
+            os.remove(name)
