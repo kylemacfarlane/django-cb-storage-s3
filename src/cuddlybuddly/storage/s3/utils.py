@@ -1,3 +1,4 @@
+import re
 from django.conf import settings
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import QueryStringAuthGenerator
@@ -19,23 +20,29 @@ def create_signed_url(file, expires=60, secure=False):
 
 
 class CloudFrontURLs(object):
-    def __init__(self, cnames, https=None):
-        self.cnames = cnames
-        self.https = https
-        self._counter = 1
+    def __init__(self, default, patterns={}, https=None):
+        self._default = default
+        self._patterns = []
+        for key, value in patterns.iteritems():
+            self._patterns.append((re.compile(key), value))
+        self._https = https
+
+    def match(self, name):
+        for pattern in self._patterns:
+            if pattern[0].match(name):
+                return pattern[1]
+        return self._default
 
     def __getattribute__(self, name):
-        if name in ('https', '_get_cname', '_counter', 'cnames'):
+        if name in ('_default', '_patterns', '_https', 'https', 'match',
+                    '__unicode__'):
             return object.__getattribute__(self, name)
-        return getattr(unicode(self._get_cname()), name)
+        return getattr(unicode(self.__unicode__()), name)
 
     def https(self):
-        if self.https is not None:
-            return unicode(self.https)
-        return self._get_cname()
+        if self._https is not None:
+            return unicode(self._https)
+        return self.__unicode__()
 
-    def _get_cname(self):
-        self._counter = self._counter + 1
-        if self._counter > len(self.cnames):
-            self._counter = 1
-        return unicode(self.cnames[self._counter-1])
+    def __unicode__(self):
+        return unicode(self._default)

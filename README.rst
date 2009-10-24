@@ -53,6 +53,22 @@ Optional. If you'd like to set headers sent with each file of the storage::
     }
 
 
+HTTPS
+=====
+
+Because when you use S3 your ``MEDIA_URL`` must be absolute (i.e. it starts with ``http``) it's more difficult to have URLs that match how the page was requested. The following things should help with that.
+
+``cuddlybuddly.storage.s3.middleware.ThreadLocals``
+----------------------------------------------------
+
+This middleware will ensure that the URLs of files retrieved from the databse will have the same protocol as how the page was requested.
+
+``cuddlybuddly.storage.s3.context_processors.media``
+----------------------------------------------------
+
+This context processor returns ``MEDIA_URL`` with the protocol matching how the page was requested.
+
+
 Cache
 =====
 
@@ -73,8 +89,9 @@ To create your own cache system, inherit from ``cuddlybuddly.storage.s3.cache.Ca
 
 * exists
 * getmtime
+* save
 * size
-* store
+* remove
 
 
 Utilities
@@ -90,20 +107,16 @@ To import it::
     from cuddlybuddly.storage.s3.utils import create_signed_url
 
 
-``cuddlybuddly.storage.s3.context_processors.media``
-----------------------------------------------------
-
-This context processor returns ``MEDIA_URL`` with the protocol set to either ``http`` or ``https`` depending on how the page was requested. This is useful since you can't use a relative URL with S3.
-
-``CloudFrontURLs(cnames, https=None)``
+``CloudFrontURLs(default, patterbs={}, https=None)``
 --------------------------------------
 
-Use this with the above context processor to return varying ``MEDIA_URLS``. Do the following in your settings file::
+Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times. This only really works with files from the database.
+
+To use it add something like the following to your settings file::
 
     from cuddlybuddly.storage.s3.utils import CloudFrontURLs
-    MEDIA_URL = CloudFrontURLs((
-        'http://cdn1.example.com',
-        'http://cdn2.example.com',
-        'http://cdn3.example.com',
-        'http://cdn4.example.com'
-        ), https='https://yourbucket.s3.amazonaws.com')
+    MEDIA_URL = CloudFrontURLs('http://cdn1.example.com/', patterns={
+        '^images/': 'http://cdn2.example.com/',
+        '^banners/': 'http://cdn3.example.com/',
+        '^gallery/': 'http://cdn4.example.com/'
+        }, https='https://example.s3.amazonaws.com/')

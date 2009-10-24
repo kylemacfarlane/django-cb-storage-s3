@@ -2,6 +2,7 @@ from email.utils import parsedate
 import os
 import mimetypes
 from time import mktime
+import urlparse
 
 try:
     from cStringIO import StringIO
@@ -12,9 +13,12 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.core.files.storage import Storage
+from django.utils.http import urlquote_plus
 from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection, QueryStringAuthGenerator
+from cuddlybuddly.storage.s3.middleware import request_is_secure
+
 
 ACCESS_KEY_NAME = 'AWS_ACCESS_KEY_ID'
 SECRET_KEY_NAME = 'AWS_SECRET_ACCESS_KEY'
@@ -25,7 +29,7 @@ class S3Storage(Storage):
     """Amazon Simple Storage Service"""
 
     def __init__(self, bucket=None, access_key=None, secret_key=None, acl=None,
-            calling_format=None, cache=None):
+            calling_format=None, cache=None, base_url=None):
         if bucket is None:
             bucket = settings.AWS_STORAGE_BUCKET_NAME
         if acl is None:
@@ -56,6 +60,10 @@ class S3Storage(Storage):
                 self.cache = self._get_cache_class(cache)()
             else:
                 self.cache = None
+
+        if base_url is None:
+            base_url = settings.MEDIA_URL
+        self.base_url = base_url
 
     def _get_cache_class(self, import_path=None):
         try:
@@ -184,11 +192,25 @@ class S3Storage(Storage):
         return last_modified
 
     def url(self, name):
+        if self.base_url is None:
+            raise ValueError("This file is not accessible via a URL.")
         name = self._path(name)
-        if getattr(settings, 'AWS_QUERYSTRING_ACTIVE', False):
-            return self.generator.generate_url('GET', self.bucket, name)
+        if request_is_secure():
+            if hasattr(self.base_url, 'https'):
+                url = self.base_url.https()
+            else:
+                if hasattr(self.base_url, 'match'):
+                    url = self.base_url.match(name)
+                else:
+                    url = self.base_url
+                url = url.replace('http://', 'https://')
         else:
-            return self.generator.make_bare_url(self.bucket, name)
+            if hasattr(self.base_url, 'match'):
+                url = self.base_url.match(name)
+            else:
+                url = self.base_url
+            url = url.replace('https://', 'http://')
+        return urlparse.urljoin(url, urlquote_plus(name, '/'))
 
     def listdir(self, path):
         path = self._path(path)
