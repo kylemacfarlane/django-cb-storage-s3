@@ -248,6 +248,7 @@ class S3StorageFile(File):
 
     def close(self):
         if self._is_dirty:
-            self._storage._put_file(self.name, self.file.getvalue())
-            del self.__dict__['_size']
+            content = self.file.getvalue()
+            self._storage._put_file(self.name, content)
+            self._size = len(content)
         self.file.close()
