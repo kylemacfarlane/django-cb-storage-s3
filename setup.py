@@ -6,9 +6,12 @@ def read(fname):
 
 setup(
     name = 'django-cuddlybuddly-storage-s3',
-    version = '1.2.5',
+    version = '1.3',
     license = 'BSD',
-    description = 'Updated Amazon S3 storage from django-storages.',
+    descriptiopn = 'Updated Amazon S3 storage from django-storages. Adds more \
+                    fixes than I can remember, a metadata cache system and \
+                    some extra utilities for dealing with MEDIA_URL and HTTPS, \
+                    CloudFront and for creating signed URLs.',
     long_description = read('README.rst'),
     author = 'Kyle MacFarlane',
     author_email = 'kyle@deletethetrees.com',

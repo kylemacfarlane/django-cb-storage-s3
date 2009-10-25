@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 import httplib
 from time import mktime, sleep
-from urlparse import urlparse
+import urlparse
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.utils.encoding import force_unicode
 from django.utils.http import urlquote_plus
@@ -106,7 +107,7 @@ class SignedURLTests(TestCase):
         )
 
     def get_url(self, url):
-        url = urlparse(url)
+        url = urlparse.urlparse(url)
         if url.scheme == 'https':
             conn = httplib.HTTPSConnection(url.netloc)
         else:
@@ -142,3 +143,37 @@ class SignedURLTests(TestCase):
 
     def test_signed_url_with_unicode(self):
         self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
+
+
+class TemplateTagsTests(TestCase):
+    def render_template(self, source, context=None):
+        if not context:
+            context = {}
+        context = Context(context)
+        source = '{% load s3_tags %}' + source
+        return Template(source).render(context)
+
+    def test_bad_values(self):
+        tests = (
+            '{% s3_media_url %}',
+            '{% s3_media_url "a" as %}',
+        )
+        for test in tests:
+            self.assertRaises(TemplateSyntaxError, self.render_template, test)
+
+    def test_good_values(self):
+        tests = {
+            '{% s3_media_url "test/file.txt" %}':
+                'test/file.txt',
+            '{% s3_media_url "test/file2.txt" as var %}{{ var }}':
+                'test/file2.txt',
+            '{% s3_media_url file %}':
+                ('test/file3.txt', {'file': 'test/file3.txt'}),
+            '{% s3_media_url file as var %}{{ var }}':
+                ('test/file4.txt', {'file': 'test/file4.txt'}),
+        }
+        for name, val in tests.items():
+            if type(val).__name__ == 'str':
+                val = (val, None)
+            self.assertEqual(self.render_template(name, val[1]),
+                             urlparse.urljoin(settings.MEDIA_URL, val[0]))

@@ -2,7 +2,7 @@
 django-cuddlybuddly-storage-s3
 ===============================
 
-Updated Amazon S3 storage from django-storages. Adds more fixes than I can remember, a metadata cache system and some extra utilities.
+Updated Amazon S3 storage from django-storages. Adds more fixes than I can remember, a metadata cache system and some extra utilities for dealing with ``MEDIA_URL`` and ``HTTPS``, CloudFront and for creating signed URLs.
 
 
 Installation
@@ -61,7 +61,7 @@ Because when you use S3 your ``MEDIA_URL`` must be absolute (i.e. it starts with
 ``cuddlybuddly.storage.s3.middleware.ThreadLocals``
 ----------------------------------------------------
 
-This middleware will ensure that the URLs of files retrieved from the databse will have the same protocol as how the page was requested.
+This middleware will ensure that the URLs of files retrieved from the database will have the same protocol as how the page was requested.
 
 ``cuddlybuddly.storage.s3.context_processors.media``
 ----------------------------------------------------
@@ -107,10 +107,10 @@ To import it::
     from cuddlybuddly.storage.s3.utils import create_signed_url
 
 
-``CloudFrontURLs(default, patterbs={}, https=None)``
---------------------------------------
+``CloudFrontURLs(default, patterns={}, https=None)``
+----------------------------------------------------
 
-Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times. This only really works with files from the database.
+Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times.
 
 To use it add something like the following to your settings file::
 
@@ -118,5 +118,17 @@ To use it add something like the following to your settings file::
     MEDIA_URL = CloudFrontURLs('http://cdn1.example.com/', patterns={
         '^images/': 'http://cdn2.example.com/',
         '^banners/': 'http://cdn3.example.com/',
-        '^gallery/': 'http://cdn4.example.com/'
+        '^css/': 'http://cdn4.example.com/'
         }, https='https://example.s3.amazonaws.com/')
+
+``s3_media_url`` Template Tag
+-----------------------------
+
+This is for use with ``CloudFrontURLs`` and will return the appropriate URL if a match is found.
+
+Usage::
+
+    {% load s3_tags %}
+    {% s3_media_url 'css/common.css' %}
+
+For ``HTTPS``, the ``cuddlybuddly.storage.s3.middleware.ThreadLocals`` middleware must also be used.
