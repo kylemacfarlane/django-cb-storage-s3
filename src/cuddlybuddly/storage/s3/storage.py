@@ -186,8 +186,9 @@ class S3Storage(Storage):
                 return last_modified
         response = self.connection._make_request('HEAD', self.bucket, name)
         last_modified = response.getheader('Last-Modified')
-        last_modified = mktime(parsedate(last_modified))
-        if self.cache:
+        last_modified = last_modified and mktime(parsedate(last_modified)) or \
+                float(0)
+        if self.cache and last_modified:
             self._store_in_cache(name, response)
         return last_modified
 
