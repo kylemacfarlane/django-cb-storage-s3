@@ -74,7 +74,7 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
         buf += "/%s" % bucket
 
     # add the key.  even if it doesn't exist, add the slash
-    buf += "/%s" % urlquote_plus(key)
+    buf += "/%s" % urlquote_plus(key, '/')
 
     # handle special query string arguments
 
@@ -262,7 +262,7 @@ class AWSAuthConnection:
 
         # add the slash after the bucket regardless
         # the key will be appended if it is non-empty
-        path += "/%s" % urlquote_plus(key)
+        path += "/%s" % urlquote_plus(key, '/')
 
 
         # build the path_argument string
@@ -411,7 +411,7 @@ class QueryStringAuthGenerator:
 
         url = CallingFormat.build_url_base(self.protocol, self.server, self.port, bucket, self.calling_format)
 
-        url += "/%s" % urlquote_plus(key)
+        url += "/%s" % urlquote_plus(key, '/')
 
         query_args['Signature'] = encoded_canonical
         query_args['Expires'] = expires
