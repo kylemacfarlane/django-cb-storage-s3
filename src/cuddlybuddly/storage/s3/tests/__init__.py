@@ -144,6 +144,12 @@ class SignedURLTests(TestCase):
     def test_signed_url_with_unicode(self):
         self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
 
+    def test_signed_url_in_subdir(self):
+        self.run_test_signed_url('testdir/testprivatefile.txt')
+
+    def test_signed_url_in_subdir_with_unicode(self):
+        self.run_test_signed_url(u'testdir/testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
+
 
 class TemplateTagsTests(TestCase):
     def render_template(self, source, context=None):
