@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = 'django-cuddlybuddly-storage-s3',
-    version = '1.3.2',
+    version = '1.3.3',
     license = 'BSD',
     descriptiopn = 'Updated Amazon S3 storage from django-storages. Adds more \
                     fixes than I can remember, a metadata cache system and \

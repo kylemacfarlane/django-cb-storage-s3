@@ -44,13 +44,19 @@ The way you'd like to call the Amazon Web Services API, for instance if you pref
 ``AWS_HEADERS``
 ---------------
 
-Optional. If you'd like to set headers sent with each file of the storage::
+Optional. A list of regular expressions which if matched add the headers to the file being uploaded to S3. The patterns are matched from first to last::
 
     # see http://developer.yahoo.com/performance/rules.html#expires
-    AWS_HEADERS = {
-        'Expires': 'Thu, 15 Apr 2010 20:00:00 GMT',
-        'Cache-Control': 'max-age=86400',
-    }
+    AWS_HEADERS = [
+        ('private/.*', {
+            'Expires': 'Thu, 15 Apr 2000 20:00:00 GMT',
+            'Cache-Control': 'private, max-age=0',
+        }),
+        ('.*', {
+            'Expires': 'Sat, 30 Oct 2010 20:00:00 GMT',
+            'Cache-Control': 'public, max-age=31556926',
+        })
+    ]
 
 
 HTTPS

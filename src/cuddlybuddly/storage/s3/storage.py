@@ -1,6 +1,7 @@
 from email.utils import parsedate
-import os
 import mimetypes
+import os
+import re
 from time import mktime
 import urlparse
 
@@ -50,7 +51,13 @@ class S3Storage(Storage):
                             is_secure=getattr(settings, 'AWS_S3_SECURE_URLS', False))
         self.generator.set_expires_in(getattr(settings, 'AWS_QUERYSTRING_EXPIRE', 60))
 
-        self.headers = getattr(settings, HEADERS, {})
+        headers = getattr(settings, HEADERS, [])
+        # Backwards compatibility for original format from django-storages
+        if isinstance(headers, dict):
+            headers = [('.*', headers)]
+        self.headers = []
+        for value in headers:
+            self.headers.append((re.compile(value[0]), value[1]))
 
         if cache is not None:
             self.cache = cache
@@ -110,8 +117,12 @@ class S3Storage(Storage):
                 self.cache.save(name, 0, 0)
                 placedholder = True
         content_type = mimetypes.guess_type(name)[0] or "application/x-octet-stream"
-        self.headers.update({'x-amz-acl': self.acl, 'Content-Type': content_type})
-        response = self.connection.put(self.bucket, name, content, self.headers)
+        headers = {}
+        for pattern in self.headers:
+            if pattern[0].match(name):
+                headers = pattern[1]
+        headers.update({'x-amz-acl': self.acl, 'Content-Type': content_type})
+        response = self.connection.put(self.bucket, name, content, headers)
         if response.http_response.status != 200:
             if placeholder:
                 self.cache.remove(name)
