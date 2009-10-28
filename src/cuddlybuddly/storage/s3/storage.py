@@ -29,17 +29,14 @@ HEADERS = 'AWS_HEADERS'
 class S3Storage(Storage):
     """Amazon Simple Storage Service"""
 
-    def __init__(self, bucket=None, access_key=None, secret_key=None, acl=None,
-            calling_format=None, cache=None, base_url=None):
+    def __init__(self, bucket=None, access_key=None, secret_key=None,
+                 headers=None, calling_format=None, cache=None, base_url=None):
         if bucket is None:
             bucket = settings.AWS_STORAGE_BUCKET_NAME
-        if acl is None:
-            acl = getattr(settings, 'AWS_DEFAULT_ACL', 'public-read')
         if calling_format is None:
            calling_format = getattr(settings, 'AWS_CALLING_FORMAT',
                                     CallingFormat.SUBDOMAIN)
         self.bucket = bucket
-        self.acl = acl
 
         if not access_key and not secret_key:
             access_key, secret_key = self._get_access_keys()
@@ -51,12 +48,14 @@ class S3Storage(Storage):
                             is_secure=getattr(settings, 'AWS_S3_SECURE_URLS', False))
         self.generator.set_expires_in(getattr(settings, 'AWS_QUERYSTRING_EXPIRE', 60))
 
-        headers = getattr(settings, HEADERS, [])
+        default_headers = getattr(settings, HEADERS, [])
         # Backwards compatibility for original format from django-storages
-        if isinstance(headers, dict):
-            headers = [('.*', headers)]
+        if isinstance(default_headers, dict):
+            default_headers = [('.*', default_headers)]
+        if headers:
+            default_headers.update(headers)
         self.headers = []
-        for value in headers:
+        for value in default_headers:
             self.headers.append((re.compile(value[0]), value[1]))
 
         if cache is not None:
@@ -121,7 +120,8 @@ class S3Storage(Storage):
         for pattern in self.headers:
             if pattern[0].match(name):
                 headers = pattern[1]
-        headers.update({'x-amz-acl': self.acl, 'Content-Type': content_type})
+                break
+        headers.update({'Content-Type': content_type})
         response = self.connection.put(self.bucket, name, content, headers)
         if response.http_response.status != 200:
             if placeholder:

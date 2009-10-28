@@ -48,15 +48,21 @@ Optional. A list of regular expressions which if matched add the headers to the 
 
     # see http://developer.yahoo.com/performance/rules.html#expires
     AWS_HEADERS = [
-        ('private/.*', {
+        ('^private/', {
+            'x-amz-acl': 'private',
             'Expires': 'Thu, 15 Apr 2000 20:00:00 GMT',
-            'Cache-Control': 'private, max-age=0',
+            'Cache-Control': 'private, max-age=0'
         }),
         ('.*', {
+            'x-amz-acl': 'public-read',
             'Expires': 'Sat, 30 Oct 2010 20:00:00 GMT',
-            'Cache-Control': 'public, max-age=31556926',
+            'Cache-Control': 'public, max-age=31556926'
         })
     ]
+
+* ``x-amz-acl`` sets the ACL of the file on S3 and defaults to ``private``.
+* ``Expires`` is for old HTTP/1.0 caches and must be a perfectly formatted RFC 1123 date to work properly.
+* ``Cache-Control`` is HTTP/1.1 and takes precedence if supported. ``max-age`` is the number of seconds into the future the response should be cached for.
 
 
 HTTPS
