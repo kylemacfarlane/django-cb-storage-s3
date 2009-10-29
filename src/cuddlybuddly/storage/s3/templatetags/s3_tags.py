@@ -1,7 +1,9 @@
-import urlparse
+from urllib import unquote
+from urlparse import urljoin
 from django import template
 from django.conf import settings
-from django.utils.http import urlquote_plus
+from django.utils.encoding import smart_str
+from django.utils.http import urlquote
 from cuddlybuddly.storage.s3.middleware import request_is_secure
 
 
@@ -31,7 +33,9 @@ class S3MediaURLNode(template.Node):
             else:
                 url = base_url
             url = url.replace('https://', 'http://')
-        return urlparse.urljoin(url, urlquote_plus(path, '/'))
+        # Prevent double quoting
+        path = unquote(smart_str(path))
+        return urljoin(url, urlquote(path))
 
 
 def do_s3_media_url(parser, token):

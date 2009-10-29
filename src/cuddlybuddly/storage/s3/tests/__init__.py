@@ -182,6 +182,14 @@ class TemplateTagsTests(TestCase):
                 ('test/file3.txt', {'file': 'test/file3.txt'}),
             '{% s3_media_url file as var %}{{ var }}':
                 ('test/file4.txt', {'file': 'test/file4.txt'}),
+            '{% s3_media_url "test/file%20quote.txt" %}':
+                'test/file%20quote.txt',
+            '{% s3_media_url "test/file quote.txt" %}':
+                'test/file%20quote.txt',
+            u'{% s3_media_url "test/fil\u00E9.txt" %}':
+                'test/fil%C3%A9.txt',
+            '{% s3_media_url "test/fil%C3%A9.txt" %}':
+                'test/fil%C3%A9.txt',
         }
         for name, val in tests.items():
             if type(val).__name__ == 'str':
