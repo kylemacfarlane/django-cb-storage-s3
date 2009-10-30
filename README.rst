@@ -61,7 +61,7 @@ Optional. A list of regular expressions which if matched add the headers to the 
     ]
 
 * ``x-amz-acl`` sets the ACL of the file on S3 and defaults to ``private``.
-* ``Expires`` is for old HTTP/1.0 caches and must be a perfectly formatted RFC 1123 date to work properly.
+* ``Expires`` is for old HTTP/1.0 caches and must be a perfectly formatted RFC 1123 date to work properly. ``django.utils.http.http_date`` can help you here.
 * ``Cache-Control`` is HTTP/1.1 and takes precedence if supported. ``max-age`` is the number of seconds into the future the response should be cached for.
 
 
