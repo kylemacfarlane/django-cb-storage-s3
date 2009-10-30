@@ -3,7 +3,7 @@ import mimetypes
 import os
 import re
 from time import mktime
-import urlparse
+from urlparse import urljoin
 
 try:
     from cStringIO import StringIO
@@ -14,7 +14,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.core.files.storage import Storage
-from django.utils.http import urlquote_plus
+from django.utils.encoding import iri_to_uri
 from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection, QueryStringAuthGenerator
@@ -222,7 +222,7 @@ class S3Storage(Storage):
             else:
                 url = self.base_url
             url = url.replace('https://', 'http://')
-        return urlparse.urljoin(url, urlquote_plus(name, '/'))
+        return urljoin(url, iri_to_uri(name))
 
     def listdir(self, path):
         path = self._path(path)
