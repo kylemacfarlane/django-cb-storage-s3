@@ -32,19 +32,10 @@ Your Amazon Web Services secret access key, as a string.
 
 Your Amazon Web Services storage bucket name, as a string.
 
-``AWS_CALLING_FORMAT``
-----------------------
-
-The way you'd like to call the Amazon Web Services API, for instance if you prefer subdomains::
-
-    from cuddlybuddly.storage.s3 import CallingFormat
-    AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
-
-
 ``AWS_HEADERS``
 ---------------
 
-Optional. A list of regular expressions which if matched add the headers to the file being uploaded to S3. The patterns are matched from first to last::
+A list of regular expressions which if matched add the headers to the file being uploaded to S3. The patterns are matched from first to last::
 
     # see http://developer.yahoo.com/performance/rules.html#expires
     AWS_HEADERS = [
@@ -63,6 +54,20 @@ Optional. A list of regular expressions which if matched add the headers to the 
 * ``x-amz-acl`` sets the ACL of the file on S3 and defaults to ``private``.
 * ``Expires`` is for old HTTP/1.0 caches and must be a perfectly formatted RFC 1123 date to work properly. ``django.utils.http.http_date`` can help you here.
 * ``Cache-Control`` is HTTP/1.1 and takes precedence if supported. ``max-age`` is the number of seconds into the future the response should be cached for.
+
+``AWS_CALLING_FORMAT``
+----------------------
+
+Optional. The way you'd like to call the Amazon Web Services API, for instance if you prefer subdomains::
+
+    from cuddlybuddly.storage.s3 import CallingFormat
+    AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
+
+
+``CUDDLYBUDDLY_STORAGE_S3_SKIP_TESTS``
+--------------------------------------
+
+Optional and defaults to false. Set to a true value to skip the tests as they can be pretty slow.
 
 
 HTTPS
@@ -84,7 +89,7 @@ This context processor returns ``MEDIA_URL`` with the protocol matching how the 
 Cache
 =====
 
-Included is a cache system to store file metadata to speed up accessing file metadata such as size and the last modified time. It is disabled by edeafult.
+Included is a cache system to store file metadata to speed up accessing file metadata such as size and the last modified time. It is disabled by default.
 
 ``FileSystemCache``
 -------------------
@@ -144,3 +149,9 @@ Usage::
     {% s3_media_url 'css/common.css' %}
 
 For ``HTTPS``, the ``cuddlybuddly.storage.s3.middleware.ThreadLocals`` middleware must also be used.
+
+
+A note on the tests
+===================
+
+The tests in ``tests/s3test.py`` are pretty much straight from Amazon but have a tendency to fail if you run them too often / too quickly. When they do this they sometimes leave behind files or buckets in your account that you will need to go and delete to make the tests pass again.
