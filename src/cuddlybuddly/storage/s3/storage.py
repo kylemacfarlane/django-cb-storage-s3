@@ -2,6 +2,7 @@ from email.utils import parsedate
 import mimetypes
 import os
 import re
+import sys
 from time import mktime
 from urlparse import urljoin
 
@@ -149,12 +150,15 @@ class S3Storage(Storage):
         return response.object.data, headers.get('etag', None), headers.get('content-range', None)
 
     def _save(self, name, content):
-        content.open()
-        if hasattr(content, 'chunks'):
-            content_str = ''.join(chunk for chunk in content.chunks())
+        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+            content.open()
+            if hasattr(content, 'chunks'):
+                content_str = ''.join(chunk for chunk in content.chunks())
+            else:
+                content_str = content.read()
+            self._put_file(name, content_str)
         else:
-            content_str = content.read()
-        self._put_file(name, content_str)
+            self._put_file(name, content)
         return name
 
     def delete(self, name):

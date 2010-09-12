@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import httplib
+from StringIO import StringIO
 from time import mktime, sleep
 import urlparse
 from django.conf import settings
@@ -18,19 +19,31 @@ if not MEDIA_URL.endswith('/'):
     MEDIA_URL = MEDIA_URL+'/'
 
 
+class UnicodeContentFile(ContentFile):
+    """
+    A version of ContentFile that never uses cStringIO so that it is always
+    unicode compatible.
+    """
+    def __init__(self, content):
+        content = content or ''
+        super(ContentFile, self).__init__(StringIO(content))
+        self.size = len(content)
+
+
 class S3StorageTests(TestCase):
-    def run_test(self, filename):
-        filename = default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
+    def run_test(self, filename, content='Lorem ipsum dolar sit amet'):
+        content = UnicodeContentFile(content)
+        filename = default_storage.save(filename, content)
         self.assert_(default_storage.exists(filename))
 
-        self.assertEqual(default_storage.size(filename), 26)
+        self.assertEqual(default_storage.size(filename), content.size)
         now = datetime.utcnow()
         delta = timedelta(minutes=5)
         mtime = default_storage.getmtime(filename)
         self.assert_(mtime > mktime((now - delta).timetuple()))
         self.assert_(mtime < mktime((now + delta).timetuple()))
         file = default_storage.open(filename)
-        self.assertEqual(file.size, 26)
+        self.assertEqual(file.size, content.size)
         fileurl = force_unicode(file).replace('\\', '/')
         fileurl = urlquote_plus(fileurl, '/')
         if fileurl.startswith('/'):
@@ -52,6 +65,10 @@ class S3StorageTests(TestCase):
 
     def test_unicode(self):
         self.run_test(u'testsdir/\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
+
+    def test_byte_contents(self):
+        data = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYF\nBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoK\nCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAAKAA8DASIA\nAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\nAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3\nODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm\np6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA\nAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx\nBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK\nU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3\nuLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3PxT8\nZP23oP8AggV47sNP/Z28PS+EF8K+J0HxAf4typqaW/8Aa97mcWH9mn515UR/aeQo+YZwPWP2tPCv\nxF/afv8A4g+AvAfhqWwl8I/tpxwXdz4XiuBNeWw+GVvL9ouzvcbvNvY4sqETbHANu/LN02saXph/\n4N6/GulnToPszeC/Ewa38lfLIOrXhI24xya5n9p+8vNA1v4jXGhXctlJd/tsJ9qe0kMZm/4tfa/f\nK43fcTr/AHF9BQB//9k=\n'.decode('base64')
+        self.run_test('testsdir/filebytes.jpg', data)
 
     def test_write_to_file(self):
         filename = 'file6.txt'
@@ -149,10 +166,10 @@ class SignedURLTests(TestCase):
         self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
 
     def test_signed_url_in_subdir(self):
-        self.run_test_signed_url('testdir/testprivatefile.txt')
+        self.run_test_signed_url('testdirs/testprivatefile.txt')
 
     def test_signed_url_in_subdir_with_unicode(self):
-        self.run_test_signed_url(u'testdir/testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
+        self.run_test_signed_url(u'testdirs/testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
 
     def test_signed_url_missing_file(self):
         signed_url = create_signed_url('testprivatemissing.txt', expires=5, secure=True)

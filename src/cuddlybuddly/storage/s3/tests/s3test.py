@@ -224,7 +224,7 @@ class TestQueryStringAuthGenerator(unittest.TestCase):
 
     def check_url(self, url, method, status, message, data=''):
         if (method == 'PUT'):
-            headers = { 'Content-Length': len(data) }
+            headers = { 'Content-Length': str(len(data)) }
             self.connection.request(method, url, data, headers)
         else:
             self.connection.request(method, url)
