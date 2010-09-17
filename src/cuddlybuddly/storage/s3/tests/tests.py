@@ -18,6 +18,8 @@ MEDIA_URL = settings.MEDIA_URL
 if not MEDIA_URL.endswith('/'):
     MEDIA_URL = MEDIA_URL+'/'
 
+DUMMY_IMAGE = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYF\nBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoK\nCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAAKAA8DASIA\nAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\nAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3\nODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm\np6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA\nAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx\nBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK\nU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3\nuLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3PxT8\nZP23oP8AggV47sNP/Z28PS+EF8K+J0HxAf4typqaW/8Aa97mcWH9mn515UR/aeQo+YZwPWP2tPCv\nxF/afv8A4g+AvAfhqWwl8I/tpxwXdz4XiuBNeWw+GVvL9ouzvcbvNvY4sqETbHANu/LN02saXph/\n4N6/GulnToPszeC/Ewa38lfLIOrXhI24xya5n9p+8vNA1v4jXGhXctlJd/tsJ9qe0kMZm/4tfa/f\nK43fcTr/AHF9BQB//9k=\n'.decode('base64')
+
 
 class UnicodeContentFile(ContentFile):
     """
@@ -67,12 +69,20 @@ class S3StorageTests(TestCase):
         self.run_test(u'testsdir/\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
 
     def test_byte_contents(self):
-        data = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYF\nBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoK\nCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAAKAA8DASIA\nAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\nAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3\nODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm\np6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA\nAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx\nBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK\nU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3\nuLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3PxT8\nZP23oP8AggV47sNP/Z28PS+EF8K+J0HxAf4typqaW/8Aa97mcWH9mn515UR/aeQo+YZwPWP2tPCv\nxF/afv8A4g+AvAfhqWwl8I/tpxwXdz4XiuBNeWw+GVvL9ouzvcbvNvY4sqETbHANu/LN02saXph/\n4N6/GulnToPszeC/Ewa38lfLIOrXhI24xya5n9p+8vNA1v4jXGhXctlJd/tsJ9qe0kMZm/4tfa/f\nK43fcTr/AHF9BQB//9k=\n'.decode('base64')
-        self.run_test('testsdir/filebytes.jpg', data)
+        self.run_test('testsdir/filebytes.jpg', DUMMY_IMAGE)
+
+    def test_byte_contents_when_closing_file(self):
+        filename = u'filebytes\u00A3.jpg'
+        file = default_storage.open(filename, 'wb')
+        file.write(DUMMY_IMAGE)
+        file.close()
+        self.assertEqual(default_storage.size(filename), file.size)
+        default_storage.delete(filename)
+        self.assert_(not default_storage.exists(filename))
 
     def test_write_to_file(self):
         filename = 'file6.txt'
-        default_storage.save(filename, ContentFile('Lorem ipsum dolor sit amet'))
+        default_storage.save(filename, UnicodeContentFile('Lorem ipsum dolor sit amet'))
         self.assert_(default_storage.exists(filename))
 
         file = default_storage.open(filename, 'w')
@@ -89,7 +99,7 @@ class S3StorageTests(TestCase):
         content = ('testsdir/file3.txt', 'testsdir/file4.txt',
                  'testsdir/sub/file5.txt')
         for file in content:
-            default_storage.save(file, ContentFile('Lorem ipsum dolor sit amet'))
+            default_storage.save(file, UnicodeContentFile('Lorem ipsum dolor sit amet'))
             self.assert_(default_storage.exists(file))
 
         dirs, files = default_storage.listdir(folder)

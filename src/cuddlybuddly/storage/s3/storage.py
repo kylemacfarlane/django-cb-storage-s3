@@ -2,15 +2,10 @@ from email.utils import parsedate
 import mimetypes
 import os
 import re
+from StringIO import StringIO # Don't use cStringIO as it's not unicode safe
 import sys
 from time import mktime
 from urlparse import urljoin
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
@@ -122,8 +117,22 @@ class S3Storage(Storage):
             if pattern[0].match(name):
                 headers = pattern[1]
                 break
-        headers.update({'Content-Type': content_type})
-        response = self.connection.put(self.bucket, name, content, headers)
+        content.seek(0)
+        content_length = len(content.read())
+        headers.update({
+            'Content-Type': content_type,
+            'Content-Length': str(content_length)
+        })
+        content.seek(0)
+        # Httplib in <= 2.6 doesn't accept file like objects, and in >= 2.7 it
+        # tries to join the content str object with the headers which results in
+        # encoding problems.
+        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+            content_to_send = content.read()
+        else:
+            content_to_send = content
+        response = self.connection.put(self.bucket, name, content_to_send, headers)
+        content.seek(0)
         if response.http_response.status != 200:
             if placeholder:
                 self.cache.remove(name)
@@ -131,7 +140,7 @@ class S3Storage(Storage):
         if self.cache:
             date = response.http_response.getheader('Date')
             date = mktime(parsedate(date))
-            self.cache.save(name, size=len(content), getmtime=date)
+            self.cache.save(name, size=content_length, getmtime=date)
 
     def _open(self, name, mode='rb'):
         remote_file = S3StorageFile(name, self, mode=mode)
@@ -150,15 +159,7 @@ class S3Storage(Storage):
         return response.object.data, headers.get('etag', None), headers.get('content-range', None)
 
     def _save(self, name, content):
-        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-            content.open()
-            if hasattr(content, 'chunks'):
-                content_str = ''.join(chunk for chunk in content.chunks())
-            else:
-                content_str = content.read()
-            self._put_file(name, content_str)
-        else:
-            self._put_file(name, content)
+        self._put_file(name, content)
         return name
 
     def delete(self, name):
@@ -286,7 +287,6 @@ class S3StorageFile(File):
 
     def close(self):
         if self._is_dirty:
-            content = self.file.getvalue()
-            self._storage._put_file(self.name, content)
-            self._size = len(content)
+            self._storage._put_file(self.name, self.file)
+            self._size = len(self.file.getvalue())
         self.file.close()

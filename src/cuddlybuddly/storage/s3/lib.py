@@ -20,7 +20,9 @@
 #
 #  Date header locale fix.
 #
-#  (c) 2009 Kyle MacFarlane
+#  Added S3Exception.
+#
+#  (c) 2009-2010 Kyle MacFarlane
 
 import base64
 import hmac
@@ -35,6 +37,9 @@ DEFAULT_HOST = 's3.amazonaws.com'
 PORTS_BY_SECURITY = { True: 443, False: 80 }
 METADATA_PREFIX = 'x-amz-meta-'
 AMAZON_HEADER_PREFIX = 'x-amz-'
+
+class S3Exception(Exception):
+    pass
 
 # generates the aws canonical string for the given parameters
 def canonical_string(method, bucket="", key="", query_args={}, headers={}, expires=None):
@@ -297,7 +302,7 @@ class AWSAuthConnection:
                     = urlparse.urlparse(location)
             if scheme == "http":    is_secure = True
             elif scheme == "https": is_secure = False
-            else: raise invalidURL("Not http/https: " + location)
+            else: raise S3Exception("Not http/https: " + location)
             if query: path += "?" + query
             # retry with redirect
 
@@ -404,7 +409,7 @@ class QueryStringAuthGenerator:
         elif self.__expires != None:
             expires = int(self.__expires)
         else:
-            raise "Invalid expires state"
+            raise S3Exception("Invalid expires state")
 
         canonical_str = canonical_string(method, bucket, key, query_args, headers, expires)
         encoded_canonical = encode(self.aws_secret_access_key, canonical_str)
