@@ -153,7 +153,10 @@ class S3Storage(Storage):
         else:
             headers = {'Range': 'bytes=%s-%s' % (start_range, end_range)}
         response = self.connection.get(self.bucket, name, headers)
-        if response.http_response.status != 200:
+        valid_responses = [200]
+        if start_range is not None or end_range is not None:
+            valid_responses.append(206)
+        if response.http_response.status not in valid_responses:
             raise IOError("S3StorageError: %s" % response.message)
         headers = response.http_response.msg
         return response.object.data, headers.get('etag', None), headers.get('content-range', None)

@@ -155,3 +155,5 @@ A note on the tests
 ===================
 
 The tests in ``tests/s3test.py`` are pretty much straight from Amazon but have a tendency to fail if you run them too often / too quickly. When they do this they sometimes leave behind files or buckets in your account that you will need to go and delete to make the tests pass again.
+
+The signed URL tests will also fail if your computer's clock is too far off from Amazon's servers.

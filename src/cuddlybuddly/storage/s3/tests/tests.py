@@ -80,6 +80,16 @@ class S3StorageTests(TestCase):
         default_storage.delete(filename)
         self.assert_(not default_storage.exists(filename))
 
+    def test_ranged_read(self):
+        filename = u'fileranged.jpg'
+        file = default_storage.open(filename, 'wb')
+        file.write(DUMMY_IMAGE)
+        file.close()
+        self.assertEqual(default_storage.size(filename), file.size)
+        self.assertEqual(len(default_storage.open(filename).read(128)), 128)
+        default_storage.delete(filename)
+        self.assert_(not default_storage.exists(filename))
+
     def test_write_to_file(self):
         filename = 'file6.txt'
         default_storage.save(filename, UnicodeContentFile('Lorem ipsum dolor sit amet'))
@@ -157,14 +167,17 @@ class SignedURLTests(TestCase):
 
         signed_url = create_signed_url(filename, expires=5, secure=True)
         response = self.get_url(signed_url)
-        self.assertEqual(response.status, 200)
+        self.assertEqual(
+            response.status,
+            200,
+            'If this is failing, try resyncing your computer\'s clock.'
+        )
         sleep(6)
         response = self.get_url(signed_url)
         self.assertEqual(
             response.status,
             403,
-            'If this is failing, either check your computer\'s clock or up the '
-            'sleep above to offset it.'
+            'If this is failing, try resyncing your computer\'s clock.'
         )
 
         default_storage.delete(filename)
