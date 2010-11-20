@@ -105,7 +105,7 @@ Custom Cache
 To create your own cache system, inherit from ``cuddlybuddly.storage.s3.cache.Cache`` and implement the following methods:
 
 * exists
-* getmtime
+* modified_time
 * save
 * size
 * remove

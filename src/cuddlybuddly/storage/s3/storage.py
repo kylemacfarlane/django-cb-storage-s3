@@ -1,3 +1,4 @@
+from datetime import datetime
 from email.utils import parsedate
 import mimetypes
 import os
@@ -86,7 +87,7 @@ class S3Storage(Storage):
         size = int(response.getheader('Content-Length'))
         date = response.getheader('Last-Modified')
         date = mktime(parsedate(date))
-        self.cache.save(name, size=size, getmtime=date)
+        self.cache.save(name, size=size, mtime=date)
 
     def _get_access_keys(self):
         access_key = getattr(settings, ACCESS_KEY_NAME, None)
@@ -140,7 +141,7 @@ class S3Storage(Storage):
         if self.cache:
             date = response.http_response.getheader('Date')
             date = mktime(parsedate(date))
-            self.cache.save(name, size=content_length, getmtime=date)
+            self.cache.save(name, size=content_length, mtime=date)
 
     def _open(self, name, mode='rb'):
         remote_file = S3StorageFile(name, self, mode=mode)
@@ -197,19 +198,19 @@ class S3Storage(Storage):
             self._store_in_cache(name, response)
         return content_length and int(content_length) or 0
 
-    def getmtime(self, name):
+    def modified_time(self, name):
         name = self._path(name)
         if self.cache:
-            last_modified = self.cache.getmtime(name)
+            last_modified = self.cache.modified_time(name)
             if last_modified is not None:
-                return last_modified
+                return datetime.fromtimestamp(last_modified)
         response = self.connection._make_request('HEAD', self.bucket, name)
         last_modified = response.getheader('Last-Modified')
         last_modified = last_modified and mktime(parsedate(last_modified)) or \
                 float(0)
         if self.cache and last_modified:
             self._store_in_cache(name, response)
-        return last_modified
+        return datetime.fromtimestamp(last_modified)
 
     def url(self, name):
         if self.base_url is None:

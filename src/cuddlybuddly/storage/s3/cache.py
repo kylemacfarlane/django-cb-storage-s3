@@ -28,7 +28,7 @@ class Cache(object):
         """
         raise NotImplementedError()
 
-    def getmtime(self, name):
+    def modified_time(self, name):
         """
         Return the time of last modification of name. The return value is a
         number giving the number of seconds since the epoch.
@@ -37,7 +37,7 @@ class Cache(object):
         """
         raise NotImplementedError()
 
-    def save(self, name, size, getmtime):
+    def save(self, name, size, mtime):
         """
         Save the values to the cache.
         """
@@ -75,7 +75,7 @@ class FileSystemCache(Cache):
             size = None
         return size
 
-    def getmtime(self, name):
+    def modified_time(self, name):
         try:
             file = open(self._path(name))
             mtime = float(file.readlines()[2])
@@ -84,11 +84,11 @@ class FileSystemCache(Cache):
             mtime = None
         return mtime
 
-    def save(self, name, size, getmtime):
+    def save(self, name, size, mtime):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
         file = open(self._path(name), 'w')
-        file.write(smart_str(name)+'\n'+str(size)+'\n'+str(getmtime))
+        file.write(smart_str(name)+'\n'+str(size)+'\n'+str(mtime))
         file.close()
 
     def remove(self, name):
