@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import httplib
 from StringIO import StringIO
-from time import mktime, sleep
+from time import sleep
 import urlparse
 from django.conf import settings
 from django.core.files.base import ContentFile

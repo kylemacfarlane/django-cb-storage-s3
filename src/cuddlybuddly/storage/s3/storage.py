@@ -14,7 +14,7 @@ from django.core.files.storage import Storage
 from django.utils.encoding import iri_to_uri
 from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3 import CallingFormat
-from cuddlybuddly.storage.s3.lib import AWSAuthConnection, QueryStringAuthGenerator
+from cuddlybuddly.storage.s3.lib import AWSAuthConnection
 from cuddlybuddly.storage.s3.middleware import request_is_secure
 
 
@@ -40,10 +40,6 @@ class S3Storage(Storage):
 
         self.connection = AWSAuthConnection(access_key, secret_key,
                             calling_format=calling_format)
-        self.generator = QueryStringAuthGenerator(access_key, secret_key,
-                            calling_format=calling_format,
-                            is_secure=getattr(settings, 'AWS_S3_SECURE_URLS', False))
-        self.generator.set_expires_in(getattr(settings, 'AWS_QUERYSTRING_EXPIRE', 60))
 
         default_headers = getattr(settings, HEADERS, [])
         # Backwards compatibility for original format from django-storages
