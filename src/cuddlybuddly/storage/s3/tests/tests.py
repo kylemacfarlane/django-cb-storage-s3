@@ -6,14 +6,17 @@ from time import sleep
 import urlparse
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.management import call_command
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.utils.encoding import force_unicode
 from django.utils.http import urlquote_plus
 from cuddlybuddly.storage.s3 import lib
+from cuddlybuddly.storage.s3.storage import S3Storage
 from cuddlybuddly.storage.s3.utils import create_signed_url
+
+
+default_storage = S3Storage()
 
 
 MEDIA_URL = settings.MEDIA_URL
