@@ -58,10 +58,10 @@ A list of regular expressions which if matched add the headers to the file being
 ``AWS_CALLING_FORMAT``
 ----------------------
 
-Optional. The way you'd like to call the Amazon Web Services API, for instance if you prefer subdomains::
+Optional and defaults to ``SUBDOMAIN``. The way you'd like to call the Amazon Web Services API, for instance if you need to use the old path method::
 
     from cuddlybuddly.storage.s3 import CallingFormat
-    AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
+    AWS_CALLING_FORMAT = CallingFormat.PATH
 
 
 ``CUDDLYBUDDLY_STORAGE_S3_SKIP_TESTS``
