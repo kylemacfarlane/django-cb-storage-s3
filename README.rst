@@ -69,6 +69,11 @@ Optional. The way you'd like to call the Amazon Web Services API, for instance i
 
 Optional and defaults to false. Set to a true value to skip the tests as they can be pretty slow.
 
+``CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE``
+----------------------------------------
+
+Optional. A list of regular expressions of files and folders to ignore when using the synchronize commands. Defaults to ``['\.svn$', '\.git$', '\.hg$', 'Thumbs\.db$', '\.DS_Store$']``.
+
 
 HTTPS
 =====
@@ -149,6 +154,27 @@ Usage::
     {% s3_media_url 'css/common.css' %}
 
 For ``HTTPS``, the ``cuddlybuddly.storage.s3.middleware.ThreadLocals`` middleware must also be used.
+
+
+Commands
+========
+
+``cb_s3_sync_media``
+--------------------
+
+Synchronizes a directory with your S3 bucket. It will skip files that are already up to date or newer in the bucket but will not remove old files as that has the potential to go very wrong.
+
+It has the following options:
+
+* ``--dir``, ``-d`` - The directory to synchronize with your bucket, defaults to ``MEDIA_ROOT``.
+* ``--exclude``, ``-e`` - A comma separated list of regular expressions to ignore files or folders. Defaults to ``CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE``.
+* ``--force``, ``-f`` - Uploads all files even if the version in the bucket is up to date.
+* ``--prefix``, ``-p`` - A prefix to prepend to every file uploaded, i.e. a subfolder to place the files in.
+
+``cb_s3_sync_static``
+---------------------
+
+Exactly the same as ``cb_s3_sync_media`` except that ``dir`` defeaults to ``STATIC_ROOT``.
 
 
 A note on the tests

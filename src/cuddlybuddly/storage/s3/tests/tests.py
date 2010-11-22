@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import httplib
+import os
 from StringIO import StringIO
 from time import sleep
 import urlparse
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.core.management import call_command
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.utils.encoding import force_unicode
@@ -240,3 +242,105 @@ class TemplateTagsTests(TestCase):
                 val = (val, None)
             self.assertEqual(self.render_template(name, val[1]),
                              urlparse.urljoin(settings.MEDIA_URL, val[0]))
+
+
+class CommandTests(TestCase):
+    def setUp(self):
+        self.backup_exclude = getattr(
+            settings,
+            'CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE',
+            None
+        )
+        settings.CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE = ['\.svn$', 'Thumbs\.db$']
+        self.folder = 'cbs3testsync'
+        self.basepath = os.path.join(settings.MEDIA_ROOT, self.folder)
+        if not os.path.exists(self.basepath):
+            os.makedirs(self.basepath)
+        self.files = {
+            'test1.txt': 'Lorem',
+            'test2.txt': 'Ipsum',
+            'test3.txt': 'Dolor'
+        }
+        self.exclude_files = {
+            '.svn/test4.txt': 'Lorem',
+            'Thumbs.db': 'Ipsum'
+        }
+        self.created_paths = []
+        for files in (self.files, self.exclude_files):
+            for filename, contents in files.items():
+                path = os.path.join(self.basepath, os.path.split(filename)[0])
+                if not os.path.exists(path):
+                    self.created_paths.append(path)
+                    os.makedirs(path)
+                fh = open(os.path.join(self.basepath, filename), 'w')
+                fh.write(contents)
+                fh.close()
+        self.created_paths.append(self.basepath)
+
+    def tearDown(self):
+        for files in (self.files, self.exclude_files):
+            for file in files.keys():
+                try:
+                    os.remove(os.path.join(self.basepath, file))
+                except:
+                    pass
+        for dir in self.created_paths:
+            try:
+                os.rmdir(dir)
+            except:
+                pass
+        settings.CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE = self.backup_exclude
+
+    def test_sync(self):
+        for file in self.files.keys():
+            self.assert_(not default_storage.exists(
+                os.path.join(self.folder, file))
+            )
+        call_command(
+            'cb_s3_sync_media',
+            verbosity=0,
+            dir=self.basepath,
+            prefix=self.folder
+        )
+        for file in self.files.keys():
+            self.assert_(default_storage.exists(
+                os.path.join(self.folder, file))
+            )
+        for file in self.exclude_files.keys():
+            self.assert_(not default_storage.exists(
+                os.path.join(self.folder, file))
+            )
+
+        modified_times = {}
+        for file in self.files.keys():
+            modified_times[file] = default_storage.modified_time(
+                os.path.join(self.folder, file)
+            )
+
+        call_command(
+            'cb_s3_sync_media',
+            verbosity=0,
+            dir=self.basepath,
+            prefix=self.folder
+        )
+        for file in self.files.keys():
+            self.assertEqual(
+                modified_times[file],
+                default_storage.modified_time(os.path.join(self.folder, file))
+            )
+
+        call_command(
+            'cb_s3_sync_media',
+            verbosity=0,
+            dir=self.basepath,
+            prefix=self.folder,
+            force=True
+        )
+        for file in self.files.keys():
+            self.assert_(
+                modified_times[file] < \
+                default_storage.modified_time(os.path.join(self.folder, file))
+            )
+
+        for file in self.files.keys():
+            default_storage.delete(os.path.join(self.folder, file))
