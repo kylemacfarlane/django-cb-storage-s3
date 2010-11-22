@@ -64,15 +64,21 @@ Optional and defaults to ``SUBDOMAIN``. The way you'd like to call the Amazon We
     AWS_CALLING_FORMAT = CallingFormat.PATH
 
 
+``CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES``
+----------------------------------------------
+
+A list of content types that will be gzipped. Defaults to ``('text/css', 'application/javascript', 'application/x-javascript')``.
+
+
 ``CUDDLYBUDDLY_STORAGE_S3_SKIP_TESTS``
 --------------------------------------
 
-Optional and defaults to false. Set to a true value to skip the tests as they can be pretty slow.
+Set to a true value to skip the tests as they can be pretty slow.
 
 ``CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE``
 ----------------------------------------
 
-Optional. A list of regular expressions of files and folders to ignore when using the synchronize commands. Defaults to ``['\.svn$', '\.git$', '\.hg$', 'Thumbs\.db$', '\.DS_Store$']``.
+A list of regular expressions of files and folders to ignore when using the synchronize commands. Defaults to ``['\.svn$', '\.git$', '\.hg$', 'Thumbs\.db$', '\.DS_Store$']``.
 
 
 HTTPS

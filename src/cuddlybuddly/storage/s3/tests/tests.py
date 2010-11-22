@@ -136,6 +136,23 @@ class S3StorageTests(TestCase):
     def test_listdir_ending_slash(self):
         self.run_listdir_test('testsdir/')
 
+    def test_gzip(self):
+        ct_backup = getattr(settings, 'CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES', None)
+        settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = (
+            'text/css',
+            'application/javascript',
+            'application/x-javascript'
+        )
+
+        filename = 'testsdir/filegzip.css'
+        file = UnicodeContentFile('Lorem ipsum ' * 512)
+        self.assertEqual(file.size, 6144)
+        default_storage.save(filename, file)
+        self.assertEqual(default_storage.size(filename), 62)
+        default_storage.delete(filename)
+
+        settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = ct_backup
+
 
 class SignedURLTests(TestCase):
     def setUp(self):

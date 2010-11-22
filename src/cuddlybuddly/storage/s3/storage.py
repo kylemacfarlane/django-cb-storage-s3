@@ -1,5 +1,6 @@
 from datetime import datetime
 from email.utils import parsedate
+from gzip import GzipFile
 import mimetypes
 import os
 import re
@@ -114,22 +115,47 @@ class S3Storage(Storage):
             if pattern[0].match(name):
                 headers = pattern[1]
                 break
+        file_pos = content.tell()
         content.seek(0)
         content_length = len(content.read())
+        content.seek(0)
+        gz_cts = getattr(
+            settings,
+            'CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES',
+            (
+                'text/css',
+                'application/javascript',
+                'application/x-javascript'
+            )
+        )
+        gz_content = None
+        if content_length > 1024 and content_type in gz_cts:
+            gz_content = StringIO()
+            gzf = GzipFile(mode='wb', fileobj=gz_content)
+            gzf.write(content.read())
+            content.seek(0)
+            gzf.close()
+            gz_content.seek(0)
+            gz_content_length = len(gz_content.read())
+            gz_content.seek(0)
+            if gz_content_length < content_length:
+                content_length = gz_content_length
+                headers.update({
+                    'Content-Encoding': 'gzip'
+                })
         headers.update({
             'Content-Type': content_type,
             'Content-Length': str(content_length)
         })
-        content.seek(0)
         # Httplib in <= 2.6 doesn't accept file like objects, and in >= 2.7 it
         # tries to join the content str object with the headers which results in
         # encoding problems.
         if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-            content_to_send = content.read()
+            content_to_send = gz_content.read() if gz_content is not None else content.read()
         else:
-            content_to_send = content
+            content_to_send = gz_content if gz_content is not None else content
         response = self.connection.put(self.bucket, name, content_to_send, headers)
-        content.seek(0)
+        content.seek(file_pos)
         if response.http_response.status != 200:
             if placeholder:
                 self.cache.remove(name)
