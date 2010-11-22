@@ -168,7 +168,7 @@ Commands
 ``cb_s3_sync_media``
 --------------------
 
-Synchronizes a directory with your S3 bucket. It will skip files that are already up to date or newer in the bucket but will not remove old files as that has the potential to go very wrong.
+Synchronizes a directory with your S3 bucket. It will skip files that are already up to date or newer in the bucket but will not remove old files as that has the potential to go very wrong. The headers specified in ``AWS_HEADERS`` will be applied.
 
 It has the following options:
 
