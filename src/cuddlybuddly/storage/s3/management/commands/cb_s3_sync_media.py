@@ -108,7 +108,7 @@ class Command(BaseCommand):
             )
             if options['force'] or \
                storage.modified_time(s3name) < \
-               datetime.fromtimestamp(os.path.getmtime(file)):
+               datetime.utcfromtimestamp(os.path.getmtime(file)):
                 if storage.exists(s3name):
                     storage.delete(s3name)
                 fh = open(file, 'rb')
