@@ -196,9 +196,9 @@ class S3Storage(Storage):
         if self.cache:
             self.cache.remove(name)
 
-    def exists(self, name):
+    def exists(self, name, force_check=False):
         name = self._path(name)
-        if self.cache:
+        if self.cache and not force_check:
             exists = self.cache.exists(name)
             if exists is not None:
                 return exists
@@ -208,9 +208,9 @@ class S3Storage(Storage):
             self._store_in_cache(name, response)
         return exists
 
-    def size(self, name):
+    def size(self, name, force_check=False):
         name = self._path(name)
-        if self.cache:
+        if self.cache and not force_check:
             size = self.cache.size(name)
             if size is not None:
                 return size
@@ -220,9 +220,9 @@ class S3Storage(Storage):
             self._store_in_cache(name, response)
         return content_length and int(content_length) or 0
 
-    def modified_time(self, name):
+    def modified_time(self, name, force_check=False):
         name = self._path(name)
-        if self.cache:
+        if self.cache and not force_check:
             last_modified = self.cache.modified_time(name)
             if last_modified is not None:
                 return datetime.fromtimestamp(last_modified)
