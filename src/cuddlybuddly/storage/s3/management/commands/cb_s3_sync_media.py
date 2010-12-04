@@ -14,7 +14,7 @@ def output(text, options, min_verbosity=1, rtrn=False, nl=False):
         global output_length
         if rtrn:
             if len(text) < output_length:
-                text = text + ' ' * (output_length - len(text))
+                text = text + ' ' * (output_length - len(text) - 1)
             text = '\r' + text
             output_length = 0
         output_length += len(text)
