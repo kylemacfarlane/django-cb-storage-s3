@@ -172,6 +172,7 @@ Synchronizes a directory with your S3 bucket. It will skip files that are alread
 
 It has the following options:
 
+* ``--cache``, ``-c`` - Get the modified times of files from the cache (if available) instead of checking S3. This is faster but could be inaccurate.
 * ``--dir``, ``-d`` - The directory to synchronize with your bucket, defaults to ``MEDIA_ROOT``.
 * ``--exclude``, ``-e`` - A comma separated list of regular expressions to ignore files or folders. Defaults to ``CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE``.
 * ``--force``, ``-f`` - Uploads all files even if the version in the bucket is up to date.

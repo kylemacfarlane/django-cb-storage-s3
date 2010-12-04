@@ -53,11 +53,11 @@ def walk(dir, options):
 class Command(BaseCommand):
     help = 'Sync folder with your S3 bucket'
     option_list = BaseCommand.option_list + (
-        make_option('-f', '--force',
+        make_option('-c', '--cache',
             action='store_true',
-            dest='force',
+            dest='cache',
             default=False,
-            help='Upload all files even if the version on S3 is up to date'),
+            help='Whether or not to check the cache for the modified times'),
         make_option('-d', '--dir',
             action='store',
             dest='dir',
@@ -70,6 +70,11 @@ class Command(BaseCommand):
             type='string',
             default=None,
             help='A comma separated list of regular expressions of files and folders to skip'),
+        make_option('-f', '--force',
+            action='store_true',
+            dest='force',
+            default=False,
+            help='Upload all files even if the version on S3 is up to date'),
         make_option('-p', '--prefix',
             action='store',
             dest='prefix',
@@ -107,7 +112,7 @@ class Command(BaseCommand):
                 os.path.relpath(file, options['dir'])
             )
             if options['force'] or \
-               storage.modified_time(s3name) < \
+               storage.modified_time(s3name, force_check=not options['cache']) < \
                datetime.utcfromtimestamp(os.path.getmtime(file)):
                 if storage.exists(s3name):
                     storage.delete(s3name)
