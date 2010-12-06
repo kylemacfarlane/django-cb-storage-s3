@@ -103,7 +103,8 @@ class Command(BaseCommand):
         skipped = uploaded = 0
         output(
             'Uploaded: %s, Skipped: %s, Total: %s/%s' % (0, 0, 0, len(files)),
-            options
+            options,
+            rtrn=True # Needed to correctly calculate padding
         )
         storage = S3Storage()
         for file in files:
