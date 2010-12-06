@@ -113,7 +113,7 @@ class S3Storage(Storage):
         headers = {}
         for pattern in self.headers:
             if pattern[0].match(name):
-                headers = pattern[1]
+                headers = pattern[1].copy()
                 break
         file_pos = content.tell()
         content.seek(0)
