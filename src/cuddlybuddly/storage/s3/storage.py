@@ -197,6 +197,8 @@ class S3Storage(Storage):
             self.cache.remove(name)
 
     def exists(self, name, force_check=False):
+        if not name:
+            return False
         name = self._path(name)
         if self.cache and not force_check:
             exists = self.cache.exists(name)

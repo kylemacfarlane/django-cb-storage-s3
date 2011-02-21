@@ -157,6 +157,10 @@ class S3StorageTests(TestCase):
         if ct_backup is not None:
             settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = ct_backup
 
+    def test_exists_on_empty_path(self):
+        self.assert_(not default_storage.exists(''))
+        self.assert_(not default_storage.exists(None))
+
 
 class SignedURLTests(TestCase):
     def setUp(self):
