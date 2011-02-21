@@ -154,7 +154,8 @@ class S3StorageTests(TestCase):
         self.assertEqual(default_storage.size(filename), 62)
         default_storage.delete(filename)
 
-        settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = ct_backup
+        if ct_backup is not None:
+            settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = ct_backup
 
 
 class SignedURLTests(TestCase):
@@ -309,7 +310,8 @@ class CommandTests(TestCase):
                 os.rmdir(dir)
             except:
                 pass
-        settings.CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE = self.backup_exclude
+        if self.backup_exclude is not None:
+            settings.CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE = self.backup_exclude
 
     def test_sync(self):
         for file in self.files.keys():
