@@ -3,3 +3,4 @@ include bootstrap.py
 include buildout.cfg
 include LICENSE
 include README.rst
+exclude src/cuddlybuddly/storage/s3/tests3credentials.py
