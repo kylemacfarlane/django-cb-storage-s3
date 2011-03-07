@@ -10,7 +10,7 @@ from django.core.management import call_command
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.utils.encoding import force_unicode
-from django.utils.http import urlquote_plus
+from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import lib
 from cuddlybuddly.storage.s3.storage import S3Storage
 from cuddlybuddly.storage.s3.utils import create_signed_url
@@ -52,9 +52,10 @@ class S3StorageTests(TestCase):
         file = default_storage.open(filename)
         self.assertEqual(file.size, content.size)
         fileurl = force_unicode(file).replace('\\', '/')
-        fileurl = urlquote_plus(fileurl, '/')
+        fileurl = urlquote(fileurl, '/')
         if fileurl.startswith('/'):
             fileurl = fileurl[1:]
+
         self.assertEqual(
             MEDIA_URL+fileurl,
             default_storage.url(filename)
@@ -75,6 +76,9 @@ class S3StorageTests(TestCase):
 
     def test_byte_contents(self):
         self.run_test('testsdir/filebytes.jpg', DUMMY_IMAGE)
+
+    def test_filename_with_spaces(self):
+        self.run_test('testsdir/filename with spaces.txt')
 
     def test_byte_contents_when_closing_file(self):
         filename = u'filebytes\u00A3.jpg'
@@ -208,9 +212,16 @@ class SignedURLTests(TestCase):
         )
 
         default_storage.delete(filename)
+        return signed_url
 
     def test_signed_url(self):
         self.run_test_signed_url('testprivatefile.txt')
+
+    def test_signed_url_with_spaces(self):
+        filename = 'test private file with spaces.txt'
+        signed_url = self.run_test_signed_url('test private file with spaces.txt')
+        self.assert_(filename.replace(' ', '+') not in signed_url)
+        self.assert_(filename.replace(' ', '%20') in signed_url)
 
     def test_signed_url_with_unicode(self):
         self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
@@ -352,7 +363,8 @@ class CommandTests(TestCase):
         for file in self.files.keys():
             self.assertEqual(
                 modified_times[file],
-                default_storage.modified_time(os.path.join(self.folder, file))
+                default_storage.modified_time(os.path.join(self.folder, file)),
+                'If this is failing, try resyncing your computer\'s clock.'
             )
 
         call_command(

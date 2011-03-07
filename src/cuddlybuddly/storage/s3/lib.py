@@ -22,7 +22,9 @@
 #
 #  Added S3Exception.
 #
-#  (c) 2009-2010 Kyle MacFarlane
+#  2011/03/07 - Changed all uses of urlquote_plus to urlquote.
+#
+#  (c) 2009-2011 Kyle MacFarlane
 
 import base64
 import hmac
@@ -31,7 +33,7 @@ import hashlib
 import time
 import urlparse
 import xml.sax
-from django.utils.http import urlquote_plus
+from django.utils.http import urlquote
 
 DEFAULT_HOST = 's3.amazonaws.com'
 PORTS_BY_SECURITY = { True: 443, False: 80 }
@@ -79,7 +81,7 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
         buf += "/%s" % bucket
 
     # add the key.  even if it doesn't exist, add the slash
-    buf += "/%s" % urlquote_plus(key, '/')
+    buf += "/%s" % urlquote(key, '/')
 
     # handle special query string arguments
 
@@ -99,7 +101,7 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
 def encode(aws_secret_access_key, str, urlencode=False):
     b64_hmac = base64.encodestring(hmac.new(aws_secret_access_key, str, hashlib.sha1).digest()).strip()
     if urlencode:
-        return urlquote_plus(b64_hmac)
+        return urlquote(b64_hmac)
     else:
         return b64_hmac
 
@@ -117,7 +119,7 @@ def query_args_hash_to_string(query_args):
     for k, v in query_args.items():
         piece = k
         if v != None:
-            piece += "=%s" % urlquote_plus(str(v))
+            piece += "=%s" % urlquote(str(v))
         pairs.append(piece)
 
     return '&'.join(pairs)
@@ -267,7 +269,7 @@ class AWSAuthConnection:
 
         # add the slash after the bucket regardless
         # the key will be appended if it is non-empty
-        path += "/%s" % urlquote_plus(key, '/')
+        path += "/%s" % urlquote(key, '/')
 
 
         # build the path_argument string
@@ -416,7 +418,7 @@ class QueryStringAuthGenerator:
 
         url = CallingFormat.build_url_base(self.protocol, self.server, self.port, bucket, self.calling_format)
 
-        url += "/%s" % urlquote_plus(key, '/')
+        url += "/%s" % urlquote(key, '/')
 
         query_args['Signature'] = encoded_canonical
         query_args['Expires'] = expires
