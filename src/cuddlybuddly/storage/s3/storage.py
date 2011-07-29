@@ -182,7 +182,14 @@ class S3Storage(Storage):
         if response.http_response.status not in valid_responses:
             raise IOError("S3StorageError: %s" % response.message)
         headers = response.http_response.msg
-        return response.object.data, headers.get('etag', None), headers.get('content-range', None)
+        data = response.object.data
+
+        if headers.get('Content-Encoding') == 'gzip':
+            gzf = GzipFile(mode='rb', fileobj=StringIO(data))
+            data = gzf.read()
+            gzf.close()
+
+        return data, headers.get('etag', None), headers.get('content-range', None)
 
     def _save(self, name, content):
         self._put_file(name, content)

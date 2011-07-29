@@ -156,6 +156,11 @@ class S3StorageTests(TestCase):
         self.assertEqual(file.size, 6144)
         default_storage.save(filename, file)
         self.assertEqual(default_storage.size(filename), 62)
+
+        file2 = default_storage.open(filename)
+        self.assertEqual(file2.read(), 'Lorem ipsum ' * 512, 'Failed to read Gzipped content')
+        file2.close()
+
         default_storage.delete(filename)
 
         if ct_backup is not None:
