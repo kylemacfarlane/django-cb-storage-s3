@@ -236,10 +236,10 @@ class S3Storage(Storage):
             if last_modified is not None:
                 return datetime.fromtimestamp(last_modified)
         response = self.connection._make_request('HEAD', self.bucket, name)
-        last_modified = response.getheader('Last-Modified')
-        last_modified = last_modified and timegm(parsedate(last_modified)) or \
-                float(0)
-        if self.cache and last_modified:
+        if response.status == 404:
+            raise IOError("S3StorageError: Cannot find the file specified: '%s'" % name)
+        last_modified = timegm(parsedate(response.getheader('Last-Modified')))
+        if self.cache:
             self._store_in_cache(name, response)
         return datetime.fromtimestamp(last_modified)
 

@@ -170,6 +170,13 @@ class S3StorageTests(TestCase):
         self.assert_(not default_storage.exists(''))
         self.assert_(not default_storage.exists(None))
 
+    def test_modified_time_on_non_existent_file(self):
+        self.assertRaises(
+            IOError,
+            default_storage.modified_time,
+            'this/file/better/not/exist'
+        )
+
 
 class SignedURLTests(TestCase):
     def setUp(self):
