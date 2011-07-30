@@ -1,3 +1,4 @@
+from calendar import timegm
 from datetime import datetime
 from email.utils import parsedate
 from gzip import GzipFile
@@ -6,7 +7,6 @@ import os
 import re
 from StringIO import StringIO # Don't use cStringIO as it's not unicode safe
 import sys
-from time import mktime
 from urlparse import urljoin
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -83,7 +83,7 @@ class S3Storage(Storage):
     def _store_in_cache(self, name, response):
         size = int(response.getheader('Content-Length'))
         date = response.getheader('Last-Modified')
-        date = mktime(parsedate(date))
+        date = timegm(parsedate(date))
         self.cache.save(name, size=size, mtime=date)
 
     def _get_access_keys(self):
@@ -162,7 +162,7 @@ class S3Storage(Storage):
             raise IOError("S3StorageError: %s" % response.message)
         if self.cache:
             date = response.http_response.getheader('Date')
-            date = mktime(parsedate(date))
+            date = timegm(parsedate(date))
             self.cache.save(name, size=content_length, mtime=date)
 
     def _open(self, name, mode='rb'):
@@ -237,7 +237,7 @@ class S3Storage(Storage):
                 return datetime.fromtimestamp(last_modified)
         response = self.connection._make_request('HEAD', self.bucket, name)
         last_modified = response.getheader('Last-Modified')
-        last_modified = last_modified and mktime(parsedate(last_modified)) or \
+        last_modified = last_modified and timegm(parsedate(last_modified)) or \
                 float(0)
         if self.cache and last_modified:
             self._store_in_cache(name, response)

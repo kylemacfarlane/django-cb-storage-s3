@@ -44,7 +44,7 @@ class S3StorageTests(TestCase):
         self.assert_(default_storage.exists(filename))
 
         self.assertEqual(default_storage.size(filename), content.size)
-        now = datetime.utcnow()
+        now = datetime.now()
         delta = timedelta(minutes=5)
         mtime = default_storage.modified_time(filename)
         self.assert_(mtime > (now - delta))
