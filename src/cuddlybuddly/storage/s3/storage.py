@@ -234,7 +234,7 @@ class S3Storage(Storage):
         name = self._path(name)
         if self.cache and not force_check:
             last_modified = self.cache.modified_time(name)
-            if last_modified is not None:
+            if last_modified:
                 return datetime.fromtimestamp(last_modified)
         response = self.connection._make_request('HEAD', self.bucket, name)
         if response.status == 404:

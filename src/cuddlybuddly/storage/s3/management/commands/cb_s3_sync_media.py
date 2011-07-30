@@ -5,6 +5,7 @@ import re
 import sys
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from cuddlybuddly.storage.s3.exceptions import S3Error
 from cuddlybuddly.storage.s3.storage import S3Storage
 
 
@@ -112,10 +113,13 @@ class Command(BaseCommand):
                 options['prefix'],
                 os.path.relpath(file, options['dir'])
             )
-            if options['force'] or \
-               storage.modified_time(s3name, force_check=not options['cache']) < \
-               datetime.fromtimestamp(os.path.getmtime(file)):
-                if storage.exists(s3name):
+            try:
+                mtime = storage.modified_time(s3name, force_check=not options['cache'])
+            except S3Error:
+                mtime = None
+            if options['force'] or mtime is None or \
+               mtime < datetime.fromtimestamp(os.path.getmtime(file)):
+                if mtime:
                     storage.delete(s3name)
                 fh = open(file, 'rb')
                 output(' Uploading %s...' % s3name, options)
