@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.utils.encoding import force_unicode
 from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import lib
+from cuddlybuddly.storage.s3.exceptions import S3Error
 from cuddlybuddly.storage.s3.storage import S3Storage
 from cuddlybuddly.storage.s3.utils import create_signed_url
 
@@ -172,7 +173,7 @@ class S3StorageTests(TestCase):
 
     def test_modified_time_on_non_existent_file(self):
         self.assertRaises(
-            IOError,
+            S3Error,
             default_storage.modified_time,
             'this/file/better/not/exist'
         )

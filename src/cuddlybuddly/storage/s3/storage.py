@@ -15,6 +15,7 @@ from django.core.files.storage import Storage
 from django.utils.encoding import iri_to_uri
 from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3 import CallingFormat
+from cuddlybuddly.storage.s3.exceptions import S3Error
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection
 from cuddlybuddly.storage.s3.middleware import request_is_secure
 
@@ -159,7 +160,7 @@ class S3Storage(Storage):
         if response.http_response.status != 200:
             if placeholder:
                 self.cache.remove(name)
-            raise IOError("S3StorageError: %s" % response.message)
+            raise S3Error(response.message)
         if self.cache:
             date = response.http_response.getheader('Date')
             date = timegm(parsedate(date))
@@ -180,7 +181,7 @@ class S3Storage(Storage):
         if start_range is not None or end_range is not None:
             valid_responses.append(206)
         if response.http_response.status not in valid_responses:
-            raise IOError("S3StorageError: %s" % response.message)
+            raise S3Error(response.message)
         headers = response.http_response.msg
         data = response.object.data
 
@@ -199,7 +200,7 @@ class S3Storage(Storage):
         name = self._path(name)
         response = self.connection.delete(self.bucket, name)
         if response.http_response.status != 204:
-            raise IOError("S3StorageError: %s" % response.message)
+            raise S3Error(response.message)
         if self.cache:
             self.cache.remove(name)
 
@@ -237,7 +238,7 @@ class S3Storage(Storage):
                 return datetime.fromtimestamp(last_modified)
         response = self.connection._make_request('HEAD', self.bucket, name)
         if response.status == 404:
-            raise IOError("S3StorageError: Cannot find the file specified: '%s'" % name)
+            raise S3Error("Cannot find the file specified: '%s'" % name)
         last_modified = timegm(parsedate(response.getheader('Last-Modified')))
         if self.cache:
             self._store_in_cache(name, response)
