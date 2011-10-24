@@ -100,6 +100,23 @@ class S3StorageTests(TestCase):
         default_storage.delete(filename)
         self.assert_(not default_storage.exists(filename))
 
+    def test_seek(self):
+        filename = u'fileseek.jpg'
+        file = default_storage.open(filename, 'wb')
+        file.write(DUMMY_IMAGE)
+        file.close()
+        self.assertEqual(default_storage.size(filename), file.size)
+
+        # Recreation of how PIL detects JPEGs.
+        file = default_storage.open(filename)
+        prefix = file.read(16)
+        file.seek(0)
+        self.assertEqual(ord(file.read(1)[0]), 255)
+        file.close()
+
+        default_storage.delete(filename)
+        self.assert_(not default_storage.exists(filename))
+
     def test_write_to_file(self):
         filename = 'file6.txt'
         default_storage.save(filename, UnicodeContentFile('Lorem ipsum dolor sit amet'))

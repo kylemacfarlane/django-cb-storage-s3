@@ -326,3 +326,7 @@ class S3StorageFile(File):
             self._storage._put_file(self.name, self.file)
             self._size = len(self.file.getvalue())
         self.file.close()
+
+    def seek(self, pos, mode=0):
+        self.file.seek(pos, mode)
+        self.start_range = 0
