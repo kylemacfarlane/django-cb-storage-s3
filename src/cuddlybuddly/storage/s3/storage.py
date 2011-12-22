@@ -117,8 +117,8 @@ class S3Storage(Storage):
                 headers = pattern[1].copy()
                 break
         file_pos = content.tell()
-        content.seek(0)
-        content_length = len(content.read())
+        content.seek(0, 2)
+        content_length = content.tell()
         content.seek(0)
         gz_cts = getattr(
             settings,
@@ -136,8 +136,8 @@ class S3Storage(Storage):
             gzf.write(content.read())
             content.seek(0)
             gzf.close()
-            gz_content.seek(0)
-            gz_content_length = len(gz_content.read())
+            gz_content.seek(0, 2)
+            gz_content_length = gz_content.tell()
             gz_content.seek(0)
             if gz_content_length < content_length:
                 content_length = gz_content_length
@@ -148,10 +148,10 @@ class S3Storage(Storage):
             'Content-Type': content_type,
             'Content-Length': str(content_length)
         })
-        # Httplib in <= 2.6 doesn't accept file like objects, and in >= 2.7 it
-        # tries to join the content str object with the headers which results in
-        # encoding problems.
-        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+        # Httplib in < 2.6 doesn't accept file like objects. Meanwhile in
+        # >= 2.7 it will try to join a content str object with the headers which
+        # results in encoding problems.
+        if sys.version_info[0] == 2 and sys.version_info[1] < 6:
             content_to_send = gz_content.read() if gz_content is not None else content.read()
         else:
             content_to_send = gz_content if gz_content is not None else content
