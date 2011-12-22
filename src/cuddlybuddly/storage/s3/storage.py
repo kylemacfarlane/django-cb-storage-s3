@@ -144,6 +144,8 @@ class S3Storage(Storage):
                 headers.update({
                     'Content-Encoding': 'gzip'
                 })
+            else:
+                gz_content = None
         headers.update({
             'Content-Type': content_type,
             'Content-Length': str(content_length)
