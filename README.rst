@@ -8,10 +8,11 @@ Updated Amazon S3 storage from django-storages. Adds more fixes than I can remem
 Installation
 ============
 
-1. Add ``cuddlybuddly.storage.s3`` to your ``INSTALLED_APPS``.
-2. Set ``DEFAULT_FILE_STORAGE`` to ``cuddlybuddly.storage.s3.S3Storage`` (as a string, don't import it).
-3. Set ``MEDIA_URL`` to your bucket URL , e.g. ``http://yourbucket.s3.amazonaws.com/``.
-4. Enter your AWS credentials in the settings below.
+1. Install using ``pip install django-cuddlybuddly-storage-s3``.
+2. Add ``cuddlybuddly.storage.s3`` to your ``INSTALLED_APPS``.
+3. Set ``DEFAULT_FILE_STORAGE`` to ``cuddlybuddly.storage.s3.S3Storage`` (as a string, don't import it).
+4. Set ``MEDIA_URL`` to your bucket URL , e.g. ``http://yourbucket.s3.amazonaws.com/``.
+5. Enter your AWS credentials in the settings below.
 
 
 Settings
