@@ -113,7 +113,7 @@ class S3Storage(Storage):
         content_type = mimetypes.guess_type(name)[0] or "application/x-octet-stream"
         headers = {}
         for pattern in self.headers:
-            if pattern[0].match(name):
+            if pattern[0].search(name):
                 headers = pattern[1].copy()
                 break
         file_pos = content.tell()
