@@ -48,7 +48,9 @@ class S3Storage(Storage):
         if isinstance(default_headers, dict):
             default_headers = [('.*', default_headers)]
         if headers:
-            default_headers.update(headers)
+            # Headers passed to __init__ take precedence over headers from
+            # settings file.
+            default_headers = list(headers) + list(default_headers)
         self.headers = []
         for value in default_headers:
             self.headers.append((re.compile(value[0]), value[1]))
