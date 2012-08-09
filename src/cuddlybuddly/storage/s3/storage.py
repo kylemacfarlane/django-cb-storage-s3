@@ -176,10 +176,13 @@ class S3Storage(Storage):
 
     def _read(self, name, start_range=None, end_range=None):
         name = self._path(name)
-        if start_range is None:
-            headers = {}
-        else:
-            headers = {'Range': 'bytes=%s-%s' % (start_range, end_range)}
+        headers, range_ = {}, None
+        if start_range is not None and end_range is not None:
+            range_ = '%s-%s' % (start_range, end_range)
+        elif start_range is not None:
+            range_ = '%s' % start_range
+        if range_ is not None:
+            headers = {'Range': 'bytes=%s' % range_}
         response = self.connection.get(self.bucket, name, headers)
         valid_responses = [200]
         if start_range is not None or end_range is not None:
@@ -306,16 +309,20 @@ class S3StorageFile(File):
         return self._size
 
     def read(self, num_bytes=None):
-        if num_bytes is None:
-            args = []
-            self.start_range = 0
-        else:
-            args = [self.start_range, self.start_range+num_bytes-1]
+        args = []
+        if num_bytes is None and self.start_range < 0:
+            args = [self.start_range]
+        elif num_bytes is not None:
+            if self.start_range < 0:
+                offset = self.size
+            else:
+                offset = 0
+            args = [self.start_range + offset, self.start_range + num_bytes - 1 + offset]
         data, etags, content_range = self._storage._read(self.name, *args)
         if content_range is not None:
             current_range, size = content_range.split(' ', 1)[1].split('/', 1)
             start_range, end_range = current_range.split('-', 1)
-            self._size, self.start_range = int(size), int(end_range)+1
+            self._size, self.start_range = int(size), int(end_range) + 1
         self.file = StringIO(data)
         return self.file.getvalue()
 
@@ -333,4 +340,4 @@ class S3StorageFile(File):
 
     def seek(self, pos, mode=0):
         self.file.seek(pos, mode)
-        self.start_range = 0
+        self.start_range = pos

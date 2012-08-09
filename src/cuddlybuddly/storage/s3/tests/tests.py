@@ -4,6 +4,7 @@ import os
 from StringIO import StringIO
 from time import sleep
 import urlparse
+from zipfile import ZipFile
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management import call_command
@@ -194,6 +195,29 @@ class S3StorageTests(TestCase):
             default_storage.modified_time,
             'this/file/better/not/exist'
         )
+
+    def test_chunked_read(self):
+        """
+        A zip file's central directory is located at the end of the file and
+        ZipFile.infolist will try to read chunks from the end before falling
+        back to reading the whole file.
+        """
+        filename = 'testsdir/filechunked.zip'
+        file_ = StringIO()
+        zip_ = ZipFile(file_, 'a')
+        zip_.writestr('test.txt', 'Lorem ipsum ' * 512)
+        zip_.close()
+        default_storage.save(filename, file_)
+
+        file2 = default_storage.open(filename)
+        zip_ = ZipFile(file2)
+        self.assertEqual(
+            [i.filename for i in zip_.infolist()],
+            ['test.txt']
+        )
+        file2.close()
+
+        default_storage.delete(filename)
 
 
 class SignedURLTests(TestCase):
