@@ -310,14 +310,14 @@ class S3StorageFile(File):
 
     def read(self, num_bytes=None):
         args = []
-        if num_bytes is None and self.start_range < 0:
-            args = [self.start_range]
-        elif num_bytes is not None:
+        if num_bytes:
             if self.start_range < 0:
                 offset = self.size
             else:
                 offset = 0
             args = [self.start_range + offset, self.start_range + num_bytes - 1 + offset]
+        elif self.start_range:
+            args = [self.start_range, '']
         data, etags, content_range = self._storage._read(self.name, *args)
         if content_range is not None:
             current_range, size = content_range.split(' ', 1)[1].split('/', 1)
@@ -340,4 +340,14 @@ class S3StorageFile(File):
 
     def seek(self, pos, mode=0):
         self.file.seek(pos, mode)
-        self.start_range = pos
+        if mode == 0:
+            self.start_range = pos
+        elif mode == 1:
+            self.start_range += pos
+        elif mode == 2:
+            # While S3 does support negative positions, using them makes tell()
+            # unreliable. Getting size is a pretty fast HEAD anyway.
+            self.start_range = self.size + pos
+
+    def tell(self):
+        return self.start_range
