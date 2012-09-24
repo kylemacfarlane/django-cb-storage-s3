@@ -15,7 +15,7 @@ from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import lib
 from cuddlybuddly.storage.s3.exceptions import S3Error
 from cuddlybuddly.storage.s3.storage import S3Storage
-from cuddlybuddly.storage.s3.utils import create_signed_url
+from cuddlybuddly.storage.s3.utils import CloudFrontURLs, create_signed_url
 
 
 default_storage = S3Storage()
@@ -226,6 +226,33 @@ class SignedURLTests(TestCase):
             settings.AWS_ACCESS_KEY_ID,
             settings.AWS_SECRET_ACCESS_KEY
         )
+        self.key = getattr(settings, 'CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR', None)
+        settings.CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR = ('PK12345EXAMPLE',
+"""-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDA7ki9gI/lRygIoOjV1yymgx6FYFlzJ+z1ATMaLo57nL57AavW
+hb68HYY8EA0GJU9xQdMVaHBogF3eiCWYXSUZCWM/+M5+ZcdQraRRScucmn6g4EvY
+2K4W2pxbqH8vmUikPxir41EeBPLjMOzKvbzzQy9e/zzIQVREKSp/7y1mywIDAQAB
+AoGABc7mp7XYHynuPZxChjWNJZIq+A73gm0ASDv6At7F8Vi9r0xUlQe/v0AQS3yc
+N8QlyR4XMbzMLYk3yjxFDXo4ZKQtOGzLGteCU2srANiLv26/imXA8FVidZftTAtL
+viWQZBVPTeYIA69ATUYPEq0a5u5wjGyUOij9OWyuy01mbPkCQQDluYoNpPOekQ0Z
+WrPgJ5rxc8f6zG37ZVoDBiexqtVShIF5W3xYuWhW5kYb0hliYfkq15cS7t9m95h3
+1QJf/xI/AkEA1v9l/WN1a1N3rOK4VGoCokx7kR2SyTMSbZgF9IWJNOugR/WZw7HT
+njipO3c9dy1Ms9pUKwUF46d7049ck8HwdQJARgrSKuLWXMyBH+/l1Dx/I4tXuAJI
+rlPyo+VmiOc7b5NzHptkSHEPfR9s1OK0VqjknclqCJ3Ig86OMEtEFBzjZQJBAKYz
+470hcPkaGk7tKYAgP48FvxRsnzeooptURW5E+M+PQ2W9iDPPOX9739+Xi02hGEWF
+B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
+7uwwr7XTroMv8dIFQIPreoPhRKmd/SbJzbiKfS/4QDhU
+-----END RSA PRIVATE KEY-----""")
+        self.media_url = settings.MEDIA_URL
+        settings.MEDIA_URL = CloudFrontURLs(
+            '',
+            private_cloudfront='http://d604721fxaaqy9.cloudfront.net'
+        )
+
+    def tearDown(self):
+        if self.key is not None:
+            settings.CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR = self.key
+        settings.MEDIA_URL = self.media_url
 
     def get_url(self, url):
         url = urlparse.urlparse(url)
@@ -290,6 +317,13 @@ class SignedURLTests(TestCase):
         signed_url = create_signed_url('testprivatemissing.txt', expires=5, secure=True)
         response = self.get_url(signed_url)
         self.assertEqual(response.status, 404)
+
+    def test_private_cloudfront(self):
+        signed_url = create_signed_url('/horizon.jpg?large=yes&license=yes', secure=False, private_cloudfront=True, expires_at=1258237200)
+        self.assertEqual(
+            signed_url,
+            'http://d604721fxaaqy9.cloudfront.net/horizon.jpg?large=yes&license=yes&Expires=1258237200&Signature=Nql641NHEUkUaXQHZINK1FZ~SYeUSoBJMxjdgqrzIdzV2gyEXPDNv0pYdWJkflDKJ3xIu7lbwRpSkG98NBlgPi4ZJpRRnVX4kXAJK6tdNx6FucDB7OVqzcxkxHsGFd8VCG1BkC-Afh9~lOCMIYHIaiOB6~5jt9w2EOwi6sIIqrg_&Key-Pair-Id=PK12345EXAMPLE'
+        )
 
 
 class TemplateTagsTests(TestCase):

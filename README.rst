@@ -80,6 +80,16 @@ Set to a true value to skip the tests as they can be pretty slow.
 
 A list of regular expressions of files and folders to ignore when using the synchronize commands. Defaults to ``['\.svn$', '\.git$', '\.hg$', 'Thumbs\.db$', '\.DS_Store$']``.
 
+``CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR``
+------------------------------------
+
+A tuple of a key pair ID and the contents of the private key from the security credentials page of your AWS account. This is used for signing private CloudFront URLs. For example::
+
+    settings.CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR = ('PK12345EXAMPLE',
+    """-----BEGIN RSA PRIVATE KEY-----
+    ...key contents...
+    -----END RSA PRIVATE KEY-----""")
+
 
 HTTPS
 =====
@@ -125,18 +135,22 @@ To create your own cache system, inherit from ``cuddlybuddly.storage.s3.cache.Ca
 Utilities
 =========
 
-``create_signed_url(file, expires=60, secure=False)``
------------------------------------------------------
+``create_signed_url(file, expires=60, secure=False, private_cloudfront=False, expires_at=None)``
+------------------------------------------------------------------------------------------------
 
 Creates a signed URL to ``file`` that will expire in ``expires`` seconds. If ``secure`` is set to ``True`` an ``https`` link will be returned.
+
+The ``private_cloudfront`` argument will use they key pair setup with ``CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR`` and the private CloudFront domain set in ``CloudFrontURLs`` to create signed URLs for a private CloudFront distribution.
+
+The ``expires_at`` argument will override ``expires`` and expire the URL at a specified UNIX timestamp. It was mostly just added for generating consistent URLs for testing.
 
 To import it::
 
     from cuddlybuddly.storage.s3.utils import create_signed_url
 
 
-``CloudFrontURLs(default, patterns={}, https=None)``
-----------------------------------------------------
+``CloudFrontURLs(default, patterns={}, https=None, private_cloudfront=None)``
+-----------------------------------------------------------------------------
 
 Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times.
 
@@ -148,6 +162,8 @@ To use it add something like the following to your settings file::
         '^banners/': 'http://cdn3.example.com/',
         '^css/': 'http://cdn4.example.com/'
         }, https='https://example.s3.amazonaws.com/')
+
+The ``https`` argument is a URL to bypass CloudFront's lack of HTTPS CNAME support. The ``private_cloudfront`` argument will only be used with the ``create_signed_url`` utility and you probably don't need to use it.
 
 ``s3_media_url`` Template Tag
 -----------------------------
