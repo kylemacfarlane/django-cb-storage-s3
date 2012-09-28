@@ -140,7 +140,7 @@ Utilities
 
 Creates a signed URL to ``file`` that will expire in ``expires`` seconds. If ``secure`` is set to ``True`` an ``https`` link will be returned.
 
-The ``private_cloudfront`` argument will use they key pair setup with ``CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR`` and the private CloudFront domain set in ``CloudFrontURLs`` to create signed URLs for a private CloudFront distribution.
+The ``private_cloudfront`` argument will use they key pair setup with ``CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR`` to create signed URLs for a private CloudFront distribution.
 
 The ``expires_at`` argument will override ``expires`` and expire the URL at a specified UNIX timestamp. It was mostly just added for generating consistent URLs for testing.
 
@@ -149,8 +149,8 @@ To import it::
     from cuddlybuddly.storage.s3.utils import create_signed_url
 
 
-``CloudFrontURLs(default, patterns={}, https=None, private_cloudfront=None)``
------------------------------------------------------------------------------
+``CloudFrontURLs(default, patterns={}, https=None)``
+----------------------------------------------------
 
 Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times.
 
@@ -163,7 +163,7 @@ To use it add something like the following to your settings file::
         '^css/': 'http://cdn4.example.com/'
         }, https='https://example.s3.amazonaws.com/')
 
-The ``https`` argument is a URL to bypass CloudFront's lack of HTTPS CNAME support. The ``private_cloudfront`` argument will only be used with the ``create_signed_url`` utility and you probably don't need to use it.
+The ``https`` argument is a URL to bypass CloudFront's lack of HTTPS CNAME support.
 
 ``s3_media_url`` Template Tag
 -----------------------------

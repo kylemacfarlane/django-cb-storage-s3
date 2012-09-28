@@ -244,15 +244,15 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
 7uwwr7XTroMv8dIFQIPreoPhRKmd/SbJzbiKfS/4QDhU
 -----END RSA PRIVATE KEY-----""")
         self.media_url = settings.MEDIA_URL
-        settings.MEDIA_URL = CloudFrontURLs(
-            '',
-            private_cloudfront='http://d604721fxaaqy9.cloudfront.net'
+        default_storage.base_url = settings.MEDIA_URL = CloudFrontURLs(
+            'http://%s.s3.amazonaws.com' % settings.AWS_STORAGE_BUCKET_NAME,
+            patterns={'^horizon.jpg': 'http://d604721fxaaqy9.cloudfront.net'}
         )
 
     def tearDown(self):
         if self.key is not None:
             settings.CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR = self.key
-        settings.MEDIA_URL = self.media_url
+        default_storage.base_url = settings.MEDIA_URL = self.media_url
 
     def get_url(self, url):
         url = urlparse.urlparse(url)
@@ -319,7 +319,7 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
         self.assertEqual(response.status, 404)
 
     def test_private_cloudfront(self):
-        signed_url = create_signed_url('/horizon.jpg?large=yes&license=yes', secure=False, private_cloudfront=True, expires_at=1258237200)
+        signed_url = create_signed_url('horizon.jpg?large=yes&license=yes', secure=False, private_cloudfront=True, expires_at=1258237200)
         self.assertEqual(
             signed_url,
             'http://d604721fxaaqy9.cloudfront.net/horizon.jpg?large=yes&license=yes&Expires=1258237200&Signature=Nql641NHEUkUaXQHZINK1FZ~SYeUSoBJMxjdgqrzIdzV2gyEXPDNv0pYdWJkflDKJ3xIu7lbwRpSkG98NBlgPi4ZJpRRnVX4kXAJK6tdNx6FucDB7OVqzcxkxHsGFd8VCG1BkC-Afh9~lOCMIYHIaiOB6~5jt9w2EOwi6sIIqrg_&Key-Pair-Id=PK12345EXAMPLE'

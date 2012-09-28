@@ -25,11 +25,17 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
             file
         )
 
-    domain = settings.MEDIA_URL.private_cloudfront()
-    if secure:
-        domain = domain.replace('http://', 'https://')
+    if secure and hasattr(settings.MEDIA_URL, 'https'):
+        domain = settings.MEDIA_URL.https()
     else:
-        domain = domain.replace('https://', 'http://')
+        if hasattr(settings.MEDIA_URL, 'match'):
+            domain = settings.MEDIA_URL.match(file)
+        else:
+            domain = settings.MEDIA_URL
+        if secure:
+            domain = domain.replace('http://', 'https://')
+        else:
+            domain = domain.replace('https://', 'http://')
 
     url = urljoin(domain, iri_to_uri(file))
 
@@ -65,13 +71,12 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
 
 
 class CloudFrontURLs(unicode):
-    def __new__(cls, default, patterns={}, https=None, private_cloudfront=None):
+    def __new__(cls, default, patterns={}, https=None):
         obj = super(CloudFrontURLs, cls).__new__(cls, default)
         obj._patterns = []
         for key, value in patterns.iteritems():
             obj._patterns.append((re.compile(key), unicode(value)))
         obj._https = https
-        obj._private_cloudfront = private_cloudfront
         return obj
 
     def match(self, name):
@@ -83,9 +88,4 @@ class CloudFrontURLs(unicode):
     def https(self):
         if self._https is not None:
             return unicode(self._https)
-        return self
-
-    def private_cloudfront(self):
-        if self._private_cloudfront is not None:
-            return unicode(self._private_cloudfront)
         return self
