@@ -28,6 +28,8 @@ HEADERS = 'AWS_HEADERS'
 class S3Storage(Storage):
     """Amazon Simple Storage Service"""
 
+    static = False
+
     def __init__(self, bucket=None, access_key=None, secret_key=None,
                  headers=None, calling_format=None, cache=None, base_url=None):
         if bucket is None:
@@ -65,7 +67,10 @@ class S3Storage(Storage):
                 self.cache = None
 
         if base_url is None:
-            base_url = settings.MEDIA_URL
+            if not self.static:
+                base_url = settings.MEDIA_URL
+            else:
+                base_url = settings.STATIC_URL
         self.base_url = base_url
 
     def _get_cache_class(self, import_path=None):
@@ -351,3 +356,10 @@ class S3StorageFile(File):
 
     def tell(self):
         return self.start_range
+
+
+class S3StorageStatic(S3Storage):
+    """
+    For use with ``STATICFILES_STORAGE`` and ``STATIC_URL``.
+    """
+    static = True

@@ -152,7 +152,7 @@ To import it::
 ``CloudFrontURLs(default, patterns={}, https=None)``
 ----------------------------------------------------
 
-Use this with the above context processor to return varying ``MEDIA_URLS`` depending on the path to improve page loading times.
+Use this with the context processor or storage backends to return varying ``MEDIA_URL`` or ``STATIC_URL`` depending on the path to improve page loading times.
 
 To use it add something like the following to your settings file::
 
@@ -161,7 +161,7 @@ To use it add something like the following to your settings file::
         '^images/': 'http://cdn2.example.com/',
         '^banners/': 'http://cdn3.example.com/',
         '^css/': 'http://cdn4.example.com/'
-        }, https='https://example.s3.amazonaws.com/')
+        }, https='https://example.cloudfront.net/')
 
 The ``https`` argument is a URL to bypass CloudFront's lack of HTTPS CNAME support.
 
@@ -176,6 +176,18 @@ Usage::
     {% s3_media_url 'css/common.css' %}
 
 For ``HTTPS``, the ``cuddlybuddly.storage.s3.middleware.ThreadLocals`` middleware must also be used.
+
+
+``s3_static_url`` Template Tag
+------------------------------
+
+The same as ``s3_media_url`` but uses ``STATIC_URL`` instead.
+
+
+``cuddlybuddly.storage.s3.S3StorageStatic`` Storage Backend
+-----------------------------------------------------------
+
+A version of the storage backend that uses ``STATIC_URL`` instead. For use with ``STATICFILES_STORAGE`` and the ``static`` template tag from ``contrib.staticfiles``.
 
 
 Commands
