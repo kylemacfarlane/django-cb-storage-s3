@@ -346,6 +346,8 @@ class TemplateTagsTests(TestCase):
         tests = {
             '{% s3_media_url "test/file.txt" %}':
                 'test/file.txt',
+            '{% s3_media_url "test/file2.txt" as var %}':
+                '',
             '{% s3_media_url "test/file2.txt" as var %}{{ var }}':
                 'test/file2.txt',
             '{% s3_media_url file %}':
@@ -365,7 +367,7 @@ class TemplateTagsTests(TestCase):
             if type(val).__name__ == 'str':
                 val = (val, None)
             self.assertEqual(self.render_template(name, val[1]),
-                             urlparse.urljoin(settings.MEDIA_URL, val[0]))
+                             urlparse.urljoin(settings.MEDIA_URL, val[0]) if val[0] else '')
 
 
 class CommandTests(TestCase):

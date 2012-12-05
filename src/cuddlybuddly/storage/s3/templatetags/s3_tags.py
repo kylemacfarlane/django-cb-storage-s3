@@ -35,7 +35,13 @@ class S3MediaURLNode(template.Node):
             else:
                 url = base_url
             url = url.replace('https://', 'http://')
-        return urljoin(url, iri_to_uri(path))
+
+        uri = urljoin(url, iri_to_uri(path))
+        if self.as_var:
+            context[self.as_var] = uri
+            return ''
+        else:
+            return uri
 
 
 def do_s3_media_url(parser, token, static=False):
