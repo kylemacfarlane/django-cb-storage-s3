@@ -52,13 +52,13 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
             interesting_headers[lk] = headers[header_key].strip()
 
     # these keys get empty strings if they don't exist
-    if not interesting_headers.has_key('content-type'):
+    if not 'content-type' in interesting_headers:
         interesting_headers['content-type'] = ''
-    if not interesting_headers.has_key('content-md5'):
+    if not 'content-md5' in interesting_headers:
         interesting_headers['content-md5'] = ''
 
     # just in case someone used this.  it's not necessary in this lib.
-    if interesting_headers.has_key('x-amz-date'):
+    if 'x-amz-date' in interesting_headers:
         interesting_headers['date'] = ''
 
     # if you're using expires for query string auth, then it trumps date
@@ -85,13 +85,13 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
 
     # handle special query string arguments
 
-    if query_args.has_key("acl"):
+    if "acl" in query_args:
         buf += "?acl"
-    elif query_args.has_key("torrent"):
+    elif "torrent" in query_args:
         buf += "?torrent"
-    elif query_args.has_key("logging"):
+    elif "logging" in query_args:
         buf += "?logging"
-    elif query_args.has_key("location"):
+    elif "location" in query_args:
         buf += "?location"
 
     return buf
@@ -309,7 +309,7 @@ class AWSAuthConnection:
             # retry with redirect
 
     def _add_aws_auth_header(self, headers, method, bucket, key, query_args):
-        if not headers.has_key('Date'):
+        if not 'Date' in headers:
             headers['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
 
         c_string = canonical_string(method, bucket, key, query_args, headers)

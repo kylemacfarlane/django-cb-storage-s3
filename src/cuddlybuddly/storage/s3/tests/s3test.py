@@ -190,15 +190,15 @@ class TestAWSAuthConnection(unittest.TestCase):
         prefix = ''
         marker = ''
 
-        if parameters.has_key('prefix'):
+        if 'prefix' in parameters:
             prefix = parameters['prefix']
-        if parameters.has_key('marker'):
+        if 'marker' in parameters:
             marker = parameters['marker']
 
         self.assertEquals(bucket, response.name, 'bucket name should match')
         self.assertEquals(prefix, response.prefix, 'prefix should match')
         self.assertEquals(marker, response.marker, 'marker should match')
-        if parameters.has_key('max-keys'):
+        if 'max-keys' in parameters:
             self.assertEquals(parameters['max-keys'], response.max_keys, 'max-keys should match')
         self.assertEquals(parameters['delimiter'], response.delimiter, 'delimiter should match')
         self.assertEquals(is_truncated, response.is_truncated, 'is_truncated should match')

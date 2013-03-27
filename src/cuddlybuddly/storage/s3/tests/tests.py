@@ -245,7 +245,7 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
 -----END RSA PRIVATE KEY-----""")
         self.media_url = settings.MEDIA_URL
         default_storage.base_url = settings.MEDIA_URL = CloudFrontURLs(
-            'http://%s.s3.amazonaws.com' % settings.AWS_STORAGE_BUCKET_NAME,
+            'http://%s.s3.amazonaws.com/' % settings.AWS_STORAGE_BUCKET_NAME,
             patterns={'^horizon.jpg': 'http://d604721fxaaqy9.cloudfront.net'}
         )
 

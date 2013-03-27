@@ -1,8 +1,8 @@
+import hashlib
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import smart_str
-from django.utils.hashcompat import md5_constructor
 
 
 class Cache(object):
@@ -61,7 +61,7 @@ class FileSystemCache(Cache):
         self.cache_dir = cache_dir
 
     def _path(self, name):
-        return os.path.join(self.cache_dir, md5_constructor(smart_str(name)).hexdigest())
+        return os.path.join(self.cache_dir, hashlib.md5(smart_str(name)).hexdigest())
 
     def exists(self, name):
         return None
