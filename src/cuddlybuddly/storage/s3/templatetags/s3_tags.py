@@ -2,7 +2,7 @@ from urlparse import urljoin
 from django import template
 from django.conf import settings
 from django.utils.encoding import iri_to_uri
-from cuddlybuddly.storage.s3.middleware import request_is_secure
+from cuddlybuddly.storage.s3.utils import CloudFrontURLs
 
 
 register = template.Library()
@@ -20,28 +20,15 @@ class S3MediaURLNode(template.Node):
             base_url = settings.STATIC_URL
         else:
             base_url = settings.MEDIA_URL
-        if request_is_secure():
-            if hasattr(base_url, 'https'):
-                url = base_url.https()
-            else:
-                if hasattr(base_url, 'match'):
-                    url = base_url.match(path)
-                else:
-                    url = base_url
-                url = url.replace('http://', 'https://')
-        else:
-            if hasattr(base_url, 'match'):
-                url = base_url.match(path)
-            else:
-                url = base_url
-            url = url.replace('https://', 'http://')
+        if not isinstance(base_url, CloudFrontURLs):
+            base_url = CloudFrontURLs(base_url)
+        url = base_url.get_url(path)
 
-        uri = urljoin(url, iri_to_uri(path))
         if self.as_var:
-            context[self.as_var] = uri
+            context[self.as_var] = url
             return ''
         else:
-            return uri
+            return url
 
 
 def do_s3_media_url(parser, token, static=False):

@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.encoding import iri_to_uri
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import QueryStringAuthGenerator
+from cuddlybuddly.storage.s3.middleware import request_is_secure
 
 
 def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, expires_at=None):
@@ -25,19 +26,10 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
             file
         )
 
-    if secure and hasattr(settings.MEDIA_URL, 'https'):
-        domain = settings.MEDIA_URL.https()
-    else:
-        if hasattr(settings.MEDIA_URL, 'match'):
-            domain = settings.MEDIA_URL.match(file)
-        else:
-            domain = settings.MEDIA_URL
-        if secure:
-            domain = domain.replace('http://', 'https://')
-        else:
-            domain = domain.replace('https://', 'http://')
-
-    url = urljoin(domain, iri_to_uri(file))
+    url = settings.MEDIA_URL
+    if not isinstance(settings.MEDIA_URL, CloudFrontURLs):
+        url = CloudFrontURLs(settings.MEDIA_URL)
+    url = url.get_url(file, force_https=True if secure else False)
 
     if expires_at is None:
         expires = int(time.time() + expires)
@@ -88,4 +80,11 @@ class CloudFrontURLs(unicode):
     def https(self):
         if self._https is not None:
             return unicode(self._https)
-        return self
+        return self.replace('http://', 'https://')
+
+    def get_url(self, path, force_https=False):
+        if force_https or request_is_secure():
+            url = self.https()
+        else:
+            url = self.match(path).replace('https://', 'http://')
+        return urljoin(url, iri_to_uri(path))

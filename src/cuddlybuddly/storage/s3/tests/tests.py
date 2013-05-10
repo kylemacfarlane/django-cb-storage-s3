@@ -8,6 +8,7 @@ from zipfile import ZipFile
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management import call_command
+from django.forms.widgets import Media
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.utils.encoding import force_unicode
@@ -472,3 +473,53 @@ class CommandTests(TestCase):
 
         for file in self.files.keys():
             default_storage.delete(os.path.join(self.folder, file))
+
+
+class MediaMonkeyPatchTest(TestCase):
+    def test_media_monkey_patch(self):
+        media = Media()
+        media.add_js((
+            '/admin/test1.js',
+            'admin/test2.js',
+            'http://example.com/admin/test3.js',
+            '//example.com/admin/test3.js'
+        ))
+        media.add_css({
+            'all': (
+                '/admin/test1.css',
+                'admin/test2.css',
+                'http://example.com/admin/test2.css',
+                '//example.com/admin/test2.css'
+            )
+        })
+
+        no_monkey = """
+<link href="/admin/test1.css" type="text/css" media="all" rel="stylesheet" />
+<link href="/static/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<link href="http://example.com/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<link href="//example.com/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<script type="text/javascript" src="/admin/test1.js"></script>
+<script type="text/javascript" src="/static/admin/test2.js"></script>
+<script type="text/javascript" src="http://example.com/admin/test3.js"></script>
+<script type="text/javascript" src="//example.com/admin/test3.js"></script>
+        """.strip()
+        monkey = """
+<link href="/admin/test1.css" type="text/css" media="all" rel="stylesheet" />
+<link href="http://this.com/static/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<link href="http://example.com/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<link href="//example.com/admin/test2.css" type="text/css" media="all" rel="stylesheet" />
+<script type="text/javascript" src="/admin/test1.js"></script>
+<script type="text/javascript" src="http://this.com/static/admin/test2.js"></script>
+<script type="text/javascript" src="http://example.com/admin/test3.js"></script>
+<script type="text/javascript" src="//example.com/admin/test3.js"></script>
+        """.strip()
+
+        with self.settings(STATIC_URL='/static/'):
+            self.assertEqual(media.render(), no_monkey)
+
+        with self.settings(
+            STATIC_URL=CloudFrontURLs('http://notthis.com/', patterns={
+                '^admin': 'http://this.com/static/'
+            })
+        ):
+            self.assertEqual(media.render(), monkey)
