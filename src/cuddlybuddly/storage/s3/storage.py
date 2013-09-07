@@ -314,7 +314,12 @@ class S3StorageFile(File):
         return self._size
 
     def read(self, num_bytes=None):
+        # AWS returns 416 (InvalidRange) for ranges beyond the file size
+        if self.start_range >= self.size:
+            return None
+
         args = []
+
         if num_bytes:
             if self.start_range < 0:
                 offset = self.size
