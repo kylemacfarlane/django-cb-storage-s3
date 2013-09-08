@@ -313,13 +313,16 @@ class S3StorageFile(File):
             self._size = self._storage.size(self.name)
         return self._size
 
+    def _empty_read(self):
+        self.file = StringIO('')
+        return self.file.getvalue()
+
     def read(self, num_bytes=None):
         # Reading past the file size results in a 416 (InvalidRange) error from
         # S3, but accessing the size when not using chunked reading causes an
         # unnecessary HEAD call.
         if self.start_range and self.start_range >= self.size:
-            self.file = StringIO('')
-            return self.file.getvalue()
+            return self._empty_read()
 
         args = []
 
@@ -332,7 +335,13 @@ class S3StorageFile(File):
         elif self.start_range:
             args = [self.start_range, '']
 
-        data, etags, content_range = self._storage._read(self.name, *args)
+        try:
+            data, etags, content_range = self._storage._read(self.name, *args)
+        except S3Error, e:
+            # Catch InvalidRange for 0 length reads. Perhaps we should be
+            # catching all kinds of exceptions...
+            if '<Code>InvalidRange</Code>' in unicode(e):
+                return self._empty_read()
         if content_range is not None:
             current_range, size = content_range.split(' ', 1)[1].split('/', 1)
             start_range, end_range = current_range.split('-', 1)

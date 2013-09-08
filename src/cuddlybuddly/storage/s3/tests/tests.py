@@ -218,6 +218,18 @@ class S3StorageTests(TestCase):
 
         default_storage.delete(filename)
 
+        # Now for a 0 length read
+        filename = 'testsdir/filechunkedzerolength.txt'
+        file_ = UnicodeContentFile('')
+        self.assertEqual(file_.size, 0)
+        filename = default_storage.save(filename, file_)
+
+        file_ = default_storage.open(filename)
+        for c in file_.chunks(1024):
+            self.assertEqual(len(c), 0)
+
+        default_storage.delete(filename)
+
     def test_chunked_zipfile_read(self):
         """
         A zip file's central directory is located at the end of the file and
