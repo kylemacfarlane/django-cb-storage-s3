@@ -314,6 +314,9 @@ class S3StorageFile(File):
         return self._size
 
     def read(self, num_bytes=None):
+        if self.start_range >= self.size:
+            self.file = StringIO('')
+            return self.file.getvalue()
         args = []
         if num_bytes:
             if self.start_range < 0:

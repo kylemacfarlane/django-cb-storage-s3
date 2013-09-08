@@ -11,6 +11,7 @@ from django.core.management import call_command
 from django.forms.widgets import Media
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils.encoding import force_unicode
 from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import lib
@@ -197,7 +198,27 @@ class S3StorageTests(TestCase):
             'this/file/better/not/exist'
         )
 
+    # Turn off gzip to make file sizes more predictable
+    @override_settings(CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES=())
     def test_chunked_read(self):
+        filename = 'testsdir/filechunked.txt'
+        file_ = UnicodeContentFile('Lorem ipsum ' * 200)
+        self.assertEqual(file_.size, 2400)
+        filename = default_storage.save(filename, file_)
+
+        file_ = default_storage.open(filename)
+        for i, data in enumerate(file_.chunks(1024)):
+            if i == 3:
+                length = 0
+            elif i == 2:
+                length = 352
+            else:
+                length = 1024
+            self.assertEqual(len(unicode(data)), length)
+
+        default_storage.delete(filename)
+
+    def test_chunked_zipfile_read(self):
         """
         A zip file's central directory is located at the end of the file and
         ZipFile.infolist will try to read chunks from the end before falling
