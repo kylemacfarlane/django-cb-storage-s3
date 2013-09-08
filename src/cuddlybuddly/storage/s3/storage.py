@@ -342,6 +342,7 @@ class S3StorageFile(File):
             # catching all kinds of exceptions...
             if '<Code>InvalidRange</Code>' in unicode(e):
                 return self._empty_read()
+            raise
         if content_range is not None:
             current_range, size = content_range.split(' ', 1)[1].split('/', 1)
             start_range, end_range = current_range.split('-', 1)
