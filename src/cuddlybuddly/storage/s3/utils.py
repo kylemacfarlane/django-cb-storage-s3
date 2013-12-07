@@ -3,9 +3,10 @@ import json
 import re
 import rsa
 import time
-from urlparse import urljoin
+from urllib2 import unquote
+from urlparse import urljoin, urlparse, urlunparse
 from django.conf import settings
-from django.utils.encoding import iri_to_uri
+from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.lib import QueryStringAuthGenerator
 from cuddlybuddly.storage.s3.middleware import request_is_secure
@@ -87,4 +88,6 @@ class CloudFrontURLs(unicode):
             url = self.https()
         else:
             url = self.match(path).replace('https://', 'http://')
-        return urljoin(url, iri_to_uri(path))
+        url = list(urlparse(urljoin(url, path)))
+        url[2] = urlquote(unquote(url[2].encode('utf-8')))
+        return urlunparse(url)

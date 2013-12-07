@@ -359,6 +359,11 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
             'http://d604721fxaaqy9.cloudfront.net/horizon.jpg?large=yes&license=yes&Expires=1258237200&Signature=Nql641NHEUkUaXQHZINK1FZ~SYeUSoBJMxjdgqrzIdzV2gyEXPDNv0pYdWJkflDKJ3xIu7lbwRpSkG98NBlgPi4ZJpRRnVX4kXAJK6tdNx6FucDB7OVqzcxkxHsGFd8VCG1BkC-Afh9~lOCMIYHIaiOB6~5jt9w2EOwi6sIIqrg_&Key-Pair-Id=PK12345EXAMPLE'
         )
 
+    def test_encoding(self):
+        signed_url = create_signed_url('it\'s/a/test.jpg', secure=False, private_cloudfront=True, expires_at=1258237200)
+        self.assert_('/it\'s/a/test.jpg?' not in signed_url)
+        self.assert_('/it%27s/a/test.jpg?' in signed_url)
+
 
 class TemplateTagsTests(TestCase):
     def render_template(self, source, context=None):
