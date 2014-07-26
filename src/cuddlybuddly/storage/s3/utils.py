@@ -1,10 +1,23 @@
 import base64
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 import json
 import re
-import rsa
+import sys
 import time
-from urllib2 import unquote
-from urlparse import urljoin, urlparse, urlunparse
+try:
+    from urllib.parse import unquote # Python 3
+except ImportError:
+    from urllib2 import unquote # Python 2
+try:
+    from urllib.parse import urljoin, urlparse, urlunparse # Python 3
+except ImportError:
+    from urlparse import urljoin, urlparse, urlunparse # Python 2
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA
 from django.conf import settings
 from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import CallingFormat
@@ -37,22 +50,28 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
     else:
         expires = expires_at
 
-    policy = {
-        'Statement': [{
-            'Resource': url,
-            'Condition': {
-                'DateLessThan': {
-                    'AWS:EpochTime': expires
-                }
-            }
-        }]
+    # Use OrderedDict to keep things predictable and testable
+    policy = OrderedDict()
+    policy['Resource'] = url
+    policy['Condition'] = {
+        'DateLessThan': {
+            'AWS:EpochTime': expires
+        }
     }
+    policy = {
+        'Statement': [
+            policy
+        ]
+    }
+    policy = json.dumps(policy, separators=(',',':'))
 
     key = settings.CUDDLYBUDDLY_STORAGE_S3_KEY_PAIR
-    policy = json.dumps(policy, separators=(',',':'))
-    sig = rsa.PrivateKey.load_pkcs1(key[1])
-    sig = rsa.sign(policy, sig, 'SHA-1')
-    sig = base64.b64encode(sig).replace('+', '-').replace('=', '_').replace('/', '~')
+    dig = SHA.new()
+    dig.update(policy.encode('utf-8'))
+    sig = PKCS1_v1_5.new(RSA.importKey(key[1]))
+    sig = sig.sign(dig)
+    sig = base64.b64encode(sig).decode('utf-8')
+    sig = sig.replace('+', '-').replace('=', '_').replace('/', '~')
 
     return '%s%sExpires=%s&Signature=%s&Key-Pair-Id=%s' % (
         url,
@@ -63,12 +82,18 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
     )
 
 
-class CloudFrontURLs(unicode):
+try:
+    extend = unicode # Python 2
+except NameError:
+    extend = str # Python 3
+
+
+class CloudFrontURLs(extend):
     def __new__(cls, default, patterns={}, https=None):
         obj = super(CloudFrontURLs, cls).__new__(cls, default)
         obj._patterns = []
-        for key, value in patterns.iteritems():
-            obj._patterns.append((re.compile(key), unicode(value)))
+        for key, value in patterns.items():
+            obj._patterns.append((re.compile(key), '%s' % value))
         obj._https = https
         return obj
 
@@ -80,7 +105,7 @@ class CloudFrontURLs(unicode):
 
     def https(self):
         if self._https is not None:
-            return unicode(self._https)
+            return '%s' % self._https
         return self.replace('http://', 'https://')
 
     def get_url(self, path, force_https=False):
@@ -89,5 +114,7 @@ class CloudFrontURLs(unicode):
         else:
             url = self.match(path).replace('https://', 'http://')
         url = list(urlparse(urljoin(url, path)))
-        url[2] = urlquote(unquote(url[2].encode('utf-8')))
+        if sys.version_info[0] == 2:
+            url[2] = url[2].encode('utf-8')
+        url[2] = urlquote(unquote(url[2]))
         return urlunparse(url)

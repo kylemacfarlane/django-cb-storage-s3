@@ -1,9 +1,19 @@
+import base64
 from datetime import datetime, timedelta
-import httplib
+try:
+    import http.client as httplib # Python 3
+except ImportError:
+    import httplib # Python 2
 import os
-from StringIO import StringIO
+try:
+    from io import BytesIO as StringIO # Python 3
+except ImportError:
+    from StringIO import StringIO # Python 2
 from time import sleep
-import urlparse
+try:
+    from urllib import parse as urlparse # Python 3
+except ImportError:
+    import urlparse # Python 2
 from zipfile import ZipFile
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -12,7 +22,7 @@ from django.forms.widgets import Media
 from django.template import Context, Template, TemplateSyntaxError
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.http import urlquote
 from cuddlybuddly.storage.s3 import lib
 from cuddlybuddly.storage.s3.exceptions import S3Error
@@ -27,7 +37,7 @@ MEDIA_URL = settings.MEDIA_URL
 if not MEDIA_URL.endswith('/'):
     MEDIA_URL = MEDIA_URL+'/'
 
-DUMMY_IMAGE = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYF\nBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoK\nCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAAKAA8DASIA\nAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\nAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3\nODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm\np6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA\nAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx\nBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK\nU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3\nuLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3PxT8\nZP23oP8AggV47sNP/Z28PS+EF8K+J0HxAf4typqaW/8Aa97mcWH9mn515UR/aeQo+YZwPWP2tPCv\nxF/afv8A4g+AvAfhqWwl8I/tpxwXdz4XiuBNeWw+GVvL9ouzvcbvNvY4sqETbHANu/LN02saXph/\n4N6/GulnToPszeC/Ewa38lfLIOrXhI24xya5n9p+8vNA1v4jXGhXctlJd/tsJ9qe0kMZm/4tfa/f\nK43fcTr/AHF9BQB//9k=\n'.decode('base64')
+DUMMY_IMAGE = base64.b64decode(b'/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYF\nBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoK\nCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAAKAA8DASIA\nAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\nAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3\nODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm\np6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA\nAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx\nBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK\nU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3\nuLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3PxT8\nZP23oP8AggV47sNP/Z28PS+EF8K+J0HxAf4typqaW/8Aa97mcWH9mn515UR/aeQo+YZwPWP2tPCv\nxF/afv8A4g+AvAfhqWwl8I/tpxwXdz4XiuBNeWw+GVvL9ouzvcbvNvY4sqETbHANu/LN02saXph/\n4N6/GulnToPszeC/Ewa38lfLIOrXhI24xya5n9p+8vNA1v4jXGhXctlJd/tsJ9qe0kMZm/4tfa/f\nK43fcTr/AHF9BQB//9k=\n')
 
 
 class UnicodeContentFile(ContentFile):
@@ -36,26 +46,25 @@ class UnicodeContentFile(ContentFile):
     unicode compatible.
     """
     def __init__(self, content):
-        content = content or ''
         super(ContentFile, self).__init__(StringIO(content))
         self.size = len(content)
 
 
 class S3StorageTests(TestCase):
-    def run_test(self, filename, content='Lorem ipsum dolar sit amet'):
+    def run_test(self, filename, content=b'Lorem ipsum dolar sit amet'):
         content = UnicodeContentFile(content)
         filename = default_storage.save(filename, content)
-        self.assert_(default_storage.exists(filename))
+        self.assertTrue(default_storage.exists(filename))
 
         self.assertEqual(default_storage.size(filename), content.size)
         now = datetime.now()
         delta = timedelta(minutes=5)
         mtime = default_storage.modified_time(filename)
-        self.assert_(mtime > (now - delta))
-        self.assert_(mtime < (now + delta))
+        self.assertTrue(mtime > (now - delta))
+        self.assertTrue(mtime < (now + delta))
         file = default_storage.open(filename)
         self.assertEqual(file.size, content.size)
-        fileurl = force_unicode(file).replace('\\', '/')
+        fileurl = force_text(file).replace('\\', '/')
         fileurl = urlquote(fileurl, '/')
         if fileurl.startswith('/'):
             fileurl = fileurl[1:]
@@ -67,7 +76,7 @@ class S3StorageTests(TestCase):
         file.close()
 
         default_storage.delete(filename)
-        self.assert_(not default_storage.exists(filename))
+        self.assertTrue(not default_storage.exists(filename))
 
     def test_absolute_path(self):
         self.run_test('/testsdir/file1.txt')
@@ -91,7 +100,7 @@ class S3StorageTests(TestCase):
         file.close()
         self.assertEqual(default_storage.size(filename), file.size)
         default_storage.delete(filename)
-        self.assert_(not default_storage.exists(filename))
+        self.assertTrue(not default_storage.exists(filename))
 
     def test_ranged_read(self):
         filename = u'fileranged.jpg'
@@ -101,7 +110,7 @@ class S3StorageTests(TestCase):
         self.assertEqual(default_storage.size(filename), file.size)
         self.assertEqual(len(default_storage.open(filename).read(128)), 128)
         default_storage.delete(filename)
-        self.assert_(not default_storage.exists(filename))
+        self.assertTrue(not default_storage.exists(filename))
 
     def test_seek(self):
         filename = u'fileseek.jpg'
@@ -114,33 +123,36 @@ class S3StorageTests(TestCase):
         file = default_storage.open(filename)
         prefix = file.read(16)
         file.seek(0)
-        self.assertEqual(ord(file.read(1)[0]), 255)
+        to_compare = file.read(1)[0]
+        if not isinstance(to_compare, int):
+            to_compare = ord(to_compare) # Python 2
+        self.assertEqual(to_compare, 255)
         file.close()
 
         default_storage.delete(filename)
-        self.assert_(not default_storage.exists(filename))
+        self.assertTrue(not default_storage.exists(filename))
 
     def test_write_to_file(self):
         filename = 'file6.txt'
-        default_storage.save(filename, UnicodeContentFile('Lorem ipsum dolor sit amet'))
-        self.assert_(default_storage.exists(filename))
+        default_storage.save(filename, UnicodeContentFile(b'Lorem ipsum dolor sit amet'))
+        self.assertTrue(default_storage.exists(filename))
 
         file = default_storage.open(filename, 'w')
         self.assertEqual(file.size, 26)
 
-        file.write('Lorem ipsum')
+        file.write(b'Lorem ipsum')
         file.close()
         self.assertEqual(file.size, 11)
 
         default_storage.delete(filename)
-        self.assert_(not default_storage.exists(filename))
+        self.assertTrue(not default_storage.exists(filename))
 
     def run_listdir_test(self, folder):
         content = ('testsdir/file3.txt', 'testsdir/file4.txt',
                  'testsdir/sub/file5.txt')
         for file in content:
-            default_storage.save(file, UnicodeContentFile('Lorem ipsum dolor sit amet'))
-            self.assert_(default_storage.exists(file))
+            default_storage.save(file, UnicodeContentFile(b'Lorem ipsum dolor sit amet'))
+            self.assertTrue(default_storage.exists(file))
 
         dirs, files = default_storage.listdir(folder)
         self.assertEqual(dirs, ['sub'])
@@ -153,7 +165,7 @@ class S3StorageTests(TestCase):
 
         for file in content:
             default_storage.delete(file)
-            self.assert_(not default_storage.exists(file))
+            self.assertTrue(not default_storage.exists(file))
 
     def test_listdir_absolute_path(self):
         self.run_listdir_test('/testsdir')
@@ -173,13 +185,13 @@ class S3StorageTests(TestCase):
         )
 
         filename = 'testsdir/filegzip.css'
-        file = UnicodeContentFile('Lorem ipsum ' * 512)
+        file = UnicodeContentFile(b'Lorem ipsum ' * 512)
         self.assertEqual(file.size, 6144)
         default_storage.save(filename, file)
         self.assertEqual(default_storage.size(filename), 62)
 
         file2 = default_storage.open(filename)
-        self.assertEqual(file2.read(), 'Lorem ipsum ' * 512, 'Failed to read Gzipped content')
+        self.assertEqual(file2.read(), b'Lorem ipsum ' * 512, 'Failed to read Gzipped content')
         file2.close()
 
         default_storage.delete(filename)
@@ -188,8 +200,8 @@ class S3StorageTests(TestCase):
             settings.CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES = ct_backup
 
     def test_exists_on_empty_path(self):
-        self.assert_(not default_storage.exists(''))
-        self.assert_(not default_storage.exists(None))
+        self.assertTrue(not default_storage.exists(''))
+        self.assertTrue(not default_storage.exists(None))
 
     def test_modified_time_on_non_existent_file(self):
         self.assertRaises(
@@ -202,7 +214,7 @@ class S3StorageTests(TestCase):
     @override_settings(CUDDLYBUDDLY_STORAGE_S3_GZIP_CONTENT_TYPES=())
     def test_chunked_read(self):
         filename = 'testsdir/filechunked.txt'
-        file_ = UnicodeContentFile('Lorem ipsum ' * 200)
+        file_ = UnicodeContentFile(b'Lorem ipsum ' * 200)
         self.assertEqual(file_.size, 2400)
         filename = default_storage.save(filename, file_)
 
@@ -214,13 +226,13 @@ class S3StorageTests(TestCase):
                 length = 352
             else:
                 length = 1024
-            self.assertEqual(len(unicode(data)), length)
+            self.assertEqual(len(data), length)
 
         default_storage.delete(filename)
 
         # Now for a 0 length read
         filename = 'testsdir/filechunkedzerolength.txt'
-        file_ = UnicodeContentFile('')
+        file_ = UnicodeContentFile(b'')
         self.assertEqual(file_.size, 0)
         filename = default_storage.save(filename, file_)
 
@@ -307,7 +319,7 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
             'Lorem ipsum dolor sit amet.',
             {'x-amz-acl': 'private'}
         )
-        self.assertEquals(response.http_response.status, 200, 'put with a string argument')
+        self.assertEqual(response.http_response.status, 200, 'put with a string argument')
         response = self.get_url(default_storage.url(filename))
         self.assertEqual(response.status, 403)
 
@@ -335,8 +347,8 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
     def test_signed_url_with_spaces(self):
         filename = 'test private file with spaces.txt'
         signed_url = self.run_test_signed_url('test private file with spaces.txt')
-        self.assert_(filename.replace(' ', '+') not in signed_url)
-        self.assert_(filename.replace(' ', '%20') in signed_url)
+        self.assertTrue(filename.replace(' ', '+') not in signed_url)
+        self.assertTrue(filename.replace(' ', '%20') in signed_url)
 
     def test_signed_url_with_unicode(self):
         self.run_test_signed_url(u'testprivatefile\u00E1\u00E9\u00ED\u00F3\u00FA.txt')
@@ -361,8 +373,8 @@ B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
 
     def test_encoding(self):
         signed_url = create_signed_url('it\'s/a/test.jpg', secure=False, private_cloudfront=True, expires_at=1258237200)
-        self.assert_('/it\'s/a/test.jpg?' not in signed_url)
-        self.assert_('/it%27s/a/test.jpg?' in signed_url)
+        self.assertTrue('/it\'s/a/test.jpg?' not in signed_url)
+        self.assertTrue('/it%27s/a/test.jpg?' in signed_url)
 
 
 class TemplateTagsTests(TestCase):
@@ -403,7 +415,7 @@ class TemplateTagsTests(TestCase):
                 'test/fil%C3%A9.txt',
         }
         for name, val in tests.items():
-            if type(val).__name__ == 'str':
+            if type(val).__name__ in ('str', 'unicode'):
                 val = (val, None)
             self.assertEqual(self.render_template(name, val[1]),
                              urlparse.urljoin(settings.MEDIA_URL, val[0]) if val[0] else '')
@@ -422,13 +434,13 @@ class CommandTests(TestCase):
         if not os.path.exists(self.basepath):
             os.makedirs(self.basepath)
         self.files = {
-            'test1.txt': 'Lorem',
-            'test2.txt': 'Ipsum',
-            'test3.txt': 'Dolor'
+            'test1.txt': b'Lorem',
+            'test2.txt': b'Ipsum',
+            'test3.txt': b'Dolor'
         }
         self.exclude_files = {
-            '.svn/test4.txt': 'Lorem',
-            'Thumbs.db': 'Ipsum'
+            '.svn/test4.txt': b'Lorem',
+            'Thumbs.db': b'Ipsum'
         }
         self.created_paths = []
         for files in (self.files, self.exclude_files):
@@ -437,7 +449,7 @@ class CommandTests(TestCase):
                 if not os.path.exists(path):
                     self.created_paths.append(path)
                     os.makedirs(path)
-                fh = open(os.path.join(self.basepath, filename), 'w')
+                fh = open(os.path.join(self.basepath, filename), 'wb')
                 fh.write(contents)
                 fh.close()
         self.created_paths.append(self.basepath)
@@ -459,7 +471,7 @@ class CommandTests(TestCase):
 
     def test_sync(self):
         for file in self.files.keys():
-            self.assert_(not default_storage.exists(
+            self.assertTrue(not default_storage.exists(
                 os.path.join(self.folder, file))
             )
         call_command(
@@ -469,11 +481,11 @@ class CommandTests(TestCase):
             prefix=self.folder
         )
         for file in self.files.keys():
-            self.assert_(default_storage.exists(
+            self.assertTrue(default_storage.exists(
                 os.path.join(self.folder, file))
             )
         for file in self.exclude_files.keys():
-            self.assert_(not default_storage.exists(
+            self.assertTrue(not default_storage.exists(
                 os.path.join(self.folder, file))
             )
 
@@ -504,7 +516,7 @@ class CommandTests(TestCase):
             force=True
         )
         for file in self.files.keys():
-            self.assert_(
+            self.assertTrue(
                 modified_times[file] < \
                 default_storage.modified_time(os.path.join(self.folder, file))
             )

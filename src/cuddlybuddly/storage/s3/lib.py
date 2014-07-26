@@ -24,14 +24,22 @@
 #
 #  2011/03/07 - Changed all uses of urlquote_plus to urlquote.
 #
+#  2014/07/26 - Python 3 support
+#
 #  (c) 2009-2011 Kyle MacFarlane
 
 import base64
 import hmac
-import httplib
+try:
+    import http.client as httplib # Python 3
+except ImportError:
+    import httplib # Python 2
 import hashlib
 import time
-import urlparse
+try:
+    from urllib import parse as urlparse # Python 3
+except ImportError:
+    import urlparse # Python 2
 import xml.sax
 from django.utils.http import urlquote
 
@@ -66,7 +74,7 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
     if expires:
         interesting_headers['date'] = str(expires)
 
-    sorted_header_keys = interesting_headers.keys()
+    sorted_header_keys = list(interesting_headers.keys())
     sorted_header_keys.sort()
 
     buf = "%s\n" % method
@@ -99,7 +107,15 @@ def canonical_string(method, bucket="", key="", query_args={}, headers={}, expir
 # computes the base64'ed hmac-sha hash of the canonical string and the secret
 # access key, optionally urlencoding the result
 def encode(aws_secret_access_key, str, urlencode=False):
-    b64_hmac = base64.encodestring(hmac.new(aws_secret_access_key, str, hashlib.sha1).digest()).strip()
+    if hasattr(base64, 'encodebytes'):
+        encoder = base64.encodebytes # Python 3
+    else:
+        encoder = base64.encodestring # Python 2
+    b64_hmac = encoder(hmac.new(
+        aws_secret_access_key.encode('utf-8'),
+        str.encode('utf-8'),
+        hashlib.sha1
+    ).digest()).strip().decode('utf-8')
     if urlencode:
         return urlquote(b64_hmac)
     else:

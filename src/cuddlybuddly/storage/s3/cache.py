@@ -2,7 +2,7 @@ import hashlib
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import smart_str
+from django.utils.encoding import force_bytes, force_text
 
 
 class Cache(object):
@@ -61,7 +61,8 @@ class FileSystemCache(Cache):
         self.cache_dir = cache_dir
 
     def _path(self, name):
-        return os.path.join(self.cache_dir, hashlib.md5(smart_str(name)).hexdigest())
+        name = force_text(name).encode('utf-8')
+        return os.path.join(self.cache_dir, hashlib.md5(name).hexdigest())
 
     def exists(self, name):
         return None
@@ -87,8 +88,8 @@ class FileSystemCache(Cache):
     def save(self, name, size, mtime):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
-        file = open(self._path(name), 'w')
-        file.write(smart_str(name)+'\n'+str(size)+'\n'+str(mtime))
+        file = open(self._path(name), 'wb')
+        file.write(('%s\n%s\n%s' % (name, size, mtime)).encode('utf-8'))
         file.close()
 
     def remove(self, name):

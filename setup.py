@@ -4,9 +4,19 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+install_requires = [
+    'setuptools',
+    'pycrypto'
+]
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    install_requires.append('ordereddict')
+
 setup(
     name = 'django-cuddlybuddly-storage-s3',
-    version = '2.23',
+    version = '3.0',
     license = 'BSD',
     description = 'Updated Amazon S3 storage from django-storages. Adds more ' \
                   'fixes than I can remember, a metadata cache system and ' \
@@ -22,10 +32,7 @@ setup(
     include_package_data = True,
     zip_safe = False,
 
-    install_requires = [
-        'setuptools',
-        'rsa'
-    ],
+    install_requires = install_requires,
 
     classifiers = [
         'Development Status :: 5 - Production/Stable',

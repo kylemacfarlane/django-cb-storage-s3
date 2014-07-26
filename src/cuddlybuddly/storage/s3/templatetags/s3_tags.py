@@ -1,7 +1,5 @@
-from urlparse import urljoin
 from django import template
 from django.conf import settings
-from django.utils.encoding import iri_to_uri
 from cuddlybuddly.storage.s3.utils import CloudFrontURLs
 
 
@@ -56,18 +54,20 @@ def do_s3_media_url(parser, token, static=False):
                 vars.append(split_token[k+2])
                 as_var = True
             except IndexError:
-                raise template.TemplateSyntaxError, \
+                raise template.TemplateSyntaxError(
                       "%r tag requires a variable name to attach to" \
                       % split_token[0]
+                )
             break
         else:
             vars.append(v)
 
     if (not as_var and len(vars) not in (1,)) \
        or (as_var and len(vars) not in (2,)):
-        raise template.TemplateSyntaxError, \
+        raise template.TemplateSyntaxError(
               "%r tag requires a path or url" \
               % token.contents.split()[0]
+        )
 
     return S3MediaURLNode(static, *vars)
 

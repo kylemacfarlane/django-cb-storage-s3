@@ -17,7 +17,10 @@
 # (c) 2009 Kyle MacFarlane
 
 import unittest
-import httplib
+try:
+    import http.client as httplib # Python 3
+except ImportError:
+    import httplib # Python 2
 from django.conf import settings
 from cuddlybuddly.storage.s3 import lib as S3
 
@@ -54,17 +57,17 @@ class TestAWSAuthConnection(unittest.TestCase):
         self.conn.calling_format = calling_format
 
         response = self.conn.create_located_bucket(bucket_name, location)
-        self.assertEquals(response.http_response.status, 200, 'create bucket')
+        self.assertEqual(response.http_response.status, 200, 'create bucket')
 
         response = self.conn.list_bucket(bucket_name)
-        self.assertEquals(response.http_response.status, 200, 'list bucket')
-        self.assertEquals(len(response.entries), 0, 'bucket is empty')
+        self.assertEqual(response.http_response.status, 200, 'list bucket')
+        self.assertEqual(len(response.entries), 0, 'bucket is empty')
 
-        text = 'this is a test'
+        text = b'this is a test'
         key = 'example.txt'
 
         response = self.conn.put(bucket_name, key, text)
-        self.assertEquals(response.http_response.status, 200, 'put with a string argument')
+        self.assertEqual(response.http_response.status, 200, 'put with a string argument')
 
         response = \
             self.conn.put(
@@ -73,13 +76,13 @@ class TestAWSAuthConnection(unittest.TestCase):
                     S3.S3Object(text, {'title': 'title'}),
                     {'Content-Type': 'text/plain'})
 
-        self.assertEquals(response.http_response.status, 200, 'put with complex argument and headers')
+        self.assertEqual(response.http_response.status, 200, 'put with complex argument and headers')
 
         response = self.conn.get(bucket_name, key)
-        self.assertEquals(response.http_response.status, 200, 'get object')
-        self.assertEquals(response.object.data, text, 'got right data')
-        self.assertEquals(response.object.metadata, { 'title': 'title' }, 'metadata is correct')
-        self.assertEquals(int(response.http_response.getheader('Content-Length')), len(text), 'got content-length header')
+        self.assertEqual(response.http_response.status, 200, 'get object')
+        self.assertEqual(response.object.data, text, 'got right data')
+        self.assertEqual(response.object.metadata, { 'title': 'title' }, 'metadata is correct')
+        self.assertEqual(int(response.http_response.getheader('Content-Length')), len(text), 'got content-length header')
 
         title_with_spaces = " \t  title with leading and trailing spaces     "
         response = \
@@ -89,11 +92,11 @@ class TestAWSAuthConnection(unittest.TestCase):
                     S3.S3Object(text, {'title': title_with_spaces}),
                     {'Content-Type': 'text/plain'})
 
-        self.assertEquals(response.http_response.status, 200, 'put with headers with spaces')
+        self.assertEqual(response.http_response.status, 200, 'put with headers with spaces')
 
         response = self.conn.get(bucket_name, key)
-        self.assertEquals(response.http_response.status, 200, 'get object')
-        self.assertEquals(
+        self.assertEqual(response.http_response.status, 200, 'get object')
+        self.assertEqual(
                 response.object.metadata,
                 { 'title': title_with_spaces.strip() },
                 'metadata with spaces is correct')
@@ -102,10 +105,10 @@ class TestAWSAuthConnection(unittest.TestCase):
         inner_key = 'test/inner.txt'
         last_key = 'z-last-key.txt'
         response = self.conn.put(bucket_name, inner_key, text)
-        self.assertEquals(response.http_response.status, 200, 'put inner key')
+        self.assertEqual(response.http_response.status, 200, 'put inner key')
 
         response = self.conn.put(bucket_name, last_key, text)
-        self.assertEquals(response.http_response.status, 200, 'put last key')
+        self.assertEqual(response.http_response.status, 200, 'put last key')
 
         response = self.do_delimited_list(bucket_name, False, {'delimiter': '/'}, 2, 1, 'root list')
 
@@ -120,71 +123,71 @@ class TestAWSAuthConnection(unittest.TestCase):
         response = self.do_delimited_list(bucket_name, False, {'prefix': 'test/', 'delimiter': '/'}, 1, 0, 'test/ list')
 
         response = self.conn.delete(bucket_name, inner_key)
-        self.assertEquals(response.http_response.status, 204, 'delete %s' % inner_key)
+        self.assertEqual(response.http_response.status, 204, 'delete %s' % inner_key)
 
         response = self.conn.delete(bucket_name, last_key)
-        self.assertEquals(response.http_response.status, 204, 'delete %s' % last_key)
+        self.assertEqual(response.http_response.status, 204, 'delete %s' % last_key)
 
 
         weird_key = '&=//%# ++++'
 
         response = self.conn.put(bucket_name, weird_key, text)
-        self.assertEquals(response.http_response.status, 200, 'put weird key')
+        self.assertEqual(response.http_response.status, 200, 'put weird key')
 
         response = self.conn.get(bucket_name, weird_key)
-        self.assertEquals(response.http_response.status, 200, 'get weird key')
+        self.assertEqual(response.http_response.status, 200, 'get weird key')
 
         response = self.conn.get_acl(bucket_name, key)
-        self.assertEquals(response.http_response.status, 200, 'get acl')
+        self.assertEqual(response.http_response.status, 200, 'get acl')
 
         acl = response.object.data
 
         response = self.conn.put_acl(bucket_name, key, acl)
-        self.assertEquals(response.http_response.status, 200, 'put acl')
+        self.assertEqual(response.http_response.status, 200, 'put acl')
 
         response = self.conn.get_bucket_acl(bucket_name)
-        self.assertEquals(response.http_response.status, 200, 'get bucket acl')
+        self.assertEqual(response.http_response.status, 200, 'get bucket acl')
 
         bucket_acl = response.object.data
 
         response = self.conn.put_bucket_acl(bucket_name, bucket_acl)
-        self.assertEquals(response.http_response.status, 200, 'put bucket acl')
+        self.assertEqual(response.http_response.status, 200, 'put bucket acl')
 
         response = self.conn.get_bucket_acl(bucket_name)
-        self.assertEquals(response.http_response.status, 200, 'get bucket logging')
+        self.assertEqual(response.http_response.status, 200, 'get bucket logging')
 
         bucket_logging = response.object.data
 
         response = self.conn.put_bucket_acl(bucket_name, bucket_logging)
-        self.assertEquals(response.http_response.status, 200, 'put bucket logging')
+        self.assertEqual(response.http_response.status, 200, 'put bucket logging')
 
         response = self.conn.list_bucket(bucket_name)
-        self.assertEquals(response.http_response.status, 200, 'list bucket')
+        self.assertEqual(response.http_response.status, 200, 'list bucket')
         entries = response.entries
-        self.assertEquals(len(entries), 2, 'got back right number of keys')
+        self.assertEqual(len(entries), 2, 'got back right number of keys')
         # depends on weird_key < key
-        self.assertEquals(entries[0].key, weird_key, 'first key is right')
-        self.assertEquals(entries[1].key, key, 'second key is right')
+        self.assertEqual(entries[0].key, weird_key, 'first key is right')
+        self.assertEqual(entries[1].key, key, 'second key is right')
 
         response = self.conn.list_bucket(bucket_name, {'max-keys': 1})
-        self.assertEquals(response.http_response.status, 200, 'list bucket with args')
-        self.assertEquals(len(response.entries), 1, 'got back right number of keys')
+        self.assertEqual(response.http_response.status, 200, 'list bucket with args')
+        self.assertEqual(len(response.entries), 1, 'got back right number of keys')
 
         for entry in entries:
             response = self.conn.delete(bucket_name, entry.key)
-            self.assertEquals(response.http_response.status, 204, 'delete %s' % entry.key)
+            self.assertEqual(response.http_response.status, 204, 'delete %s' % entry.key)
 
         response = self.conn.list_all_my_buckets()
-        self.assertEquals(response.http_response.status, 200, 'list all my buckets')
+        self.assertEqual(response.http_response.status, 200, 'list all my buckets')
         buckets = response.entries
 
         response = self.conn.delete_bucket(bucket_name)
-        self.assertEquals(response.http_response.status, 204, 'delete bucket')
+        self.assertEqual(response.http_response.status, 204, 'delete bucket')
 
         response = self.conn.list_all_my_buckets()
-        self.assertEquals(response.http_response.status, 200, 'list all my buckets again')
+        self.assertEqual(response.http_response.status, 200, 'list all my buckets again')
 
-        self.assertEquals(len(response.entries), len(buckets) - 1, 'bucket count is correct')
+        self.assertEqual(len(response.entries), len(buckets) - 1, 'bucket count is correct')
 
     def verify_list_bucket_response(self, response, bucket, is_truncated, parameters, next_marker=''):
         prefix = ''
@@ -195,20 +198,20 @@ class TestAWSAuthConnection(unittest.TestCase):
         if 'marker' in parameters:
             marker = parameters['marker']
 
-        self.assertEquals(bucket, response.name, 'bucket name should match')
-        self.assertEquals(prefix, response.prefix, 'prefix should match')
-        self.assertEquals(marker, response.marker, 'marker should match')
+        self.assertEqual(bucket, response.name, 'bucket name should match')
+        self.assertEqual(prefix, response.prefix, 'prefix should match')
+        self.assertEqual(marker, response.marker, 'marker should match')
         if 'max-keys' in parameters:
-            self.assertEquals(parameters['max-keys'], response.max_keys, 'max-keys should match')
-        self.assertEquals(parameters['delimiter'], response.delimiter, 'delimiter should match')
-        self.assertEquals(is_truncated, response.is_truncated, 'is_truncated should match')
-        self.assertEquals(next_marker, response.next_marker, 'next_marker should match')
+            self.assertEqual(parameters['max-keys'], response.max_keys, 'max-keys should match')
+        self.assertEqual(parameters['delimiter'], response.delimiter, 'delimiter should match')
+        self.assertEqual(is_truncated, response.is_truncated, 'is_truncated should match')
+        self.assertEqual(next_marker, response.next_marker, 'next_marker should match')
 
     def do_delimited_list(self, bucket_name, is_truncated, parameters, regular_expected, common_expected, test_name, next_marker=''):
         response = self.conn.list_bucket(bucket_name, parameters)
-        self.assertEquals(response.http_response.status, 200, test_name)
-        self.assertEquals(regular_expected, len(response.entries), 'right number of regular entries')
-        self.assertEquals(common_expected, len(response.common_prefixes), 'right number of common prefixes')
+        self.assertEqual(response.http_response.status, 200, test_name)
+        self.assertEqual(regular_expected, len(response.entries), 'right number of regular entries')
+        self.assertEqual(common_expected, len(response.common_prefixes), 'right number of common prefixes')
 
         self.verify_list_bucket_response(response, bucket_name, is_truncated, parameters, next_marker)
 
@@ -230,7 +233,7 @@ class TestQueryStringAuthGenerator(unittest.TestCase):
             self.connection.request(method, url)
 
         response = self.connection.getresponse()
-        self.assertEquals(response.status, status, message)
+        self.assertEqual(response.status, status, message)
 
         return response.read()
 

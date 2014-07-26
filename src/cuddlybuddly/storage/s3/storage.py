@@ -5,9 +5,16 @@ from gzip import GzipFile
 import mimetypes
 import os
 import re
-from StringIO import StringIO # Don't use cStringIO as it's not unicode safe
+try:
+    from io import BytesIO as StringIO # Python 3
+except ImportError:
+    # Don't use cStringIO as it's not unicode safe
+    from StringIO import StringIO # Python 2
 import sys
-from urlparse import urljoin
+try:
+    from urllib.parse import urljoin # Python 3
+except ImportError:
+    from urlparse import urljoin # Python 2
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
@@ -81,7 +88,7 @@ class S3Storage(Storage):
         module, classname = import_path[:dot], import_path[dot+1:]
         try:
             mod = import_module(module)
-        except ImportError, e:
+        except ImportError as e:
             raise ImproperlyConfigured('Error importing cache module %s: "%s"' % (module, e))
         try:
             return getattr(mod, classname)
@@ -314,7 +321,7 @@ class S3StorageFile(File):
         return self._size
 
     def _empty_read(self):
-        self.file = StringIO('')
+        self.file = StringIO(b'')
         return self.file.getvalue()
 
     def read(self, num_bytes=None):
@@ -337,10 +344,10 @@ class S3StorageFile(File):
 
         try:
             data, etags, content_range = self._storage._read(self.name, *args)
-        except S3Error, e:
+        except S3Error as e:
             # Catch InvalidRange for 0 length reads. Perhaps we should be
             # catching all kinds of exceptions...
-            if '<Code>InvalidRange</Code>' in unicode(e):
+            if '<Code>InvalidRange</Code>' in '%s' % e:
                 return self._empty_read()
             raise
         if content_range is not None:

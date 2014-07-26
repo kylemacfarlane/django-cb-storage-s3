@@ -70,11 +70,6 @@ Optional and defaults to ``SUBDOMAIN``. The way you'd like to call the Amazon We
 A list of content types that will be gzipped. Defaults to ``('text/css', 'application/javascript', 'application/x-javascript')``.
 
 
-``CUDDLYBUDDLY_STORAGE_S3_SKIP_TESTS``
---------------------------------------
-
-Set to a true value to skip the tests as they can be pretty slow.
-
 ``CUDDLYBUDDLY_STORAGE_S3_SYNC_EXCLUDE``
 ----------------------------------------
 
