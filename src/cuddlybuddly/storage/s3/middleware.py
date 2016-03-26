@@ -13,9 +13,4 @@ def request_is_secure():
 
 class ThreadLocals(object):
     def process_request(self, request):
-        if request.is_secure() or \
-           getattr(request.META, 'HTTP_X_FORWARDED_SSL', 'off') == 'on':
-            secure = True
-        else:
-            secure = False
-        _thread_locals.cb_request_is_secure = secure
+        _thread_locals.cb_request_is_secure = request.is_secure()

@@ -2,7 +2,7 @@ import hashlib
 import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_text
 
 
 class Cache(object):

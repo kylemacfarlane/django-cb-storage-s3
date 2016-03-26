@@ -2,6 +2,7 @@ from calendar import timegm
 from datetime import datetime
 from email.utils import parsedate
 from gzip import GzipFile
+from importlib import import_module
 import mimetypes
 import os
 import re
@@ -20,7 +21,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.core.files.storage import Storage
 from django.utils.encoding import iri_to_uri
-from django.utils.importlib import import_module
 from cuddlybuddly.storage.s3 import CallingFormat
 from cuddlybuddly.storage.s3.exceptions import S3Error
 from cuddlybuddly.storage.s3.lib import AWSAuthConnection
