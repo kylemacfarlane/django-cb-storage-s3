@@ -45,6 +45,13 @@ def create_signed_url(file, expires=60, secure=False, private_cloudfront=False, 
         url = CloudFrontURLs(settings.MEDIA_URL)
     url = url.get_url(file, force_https=True if secure else False)
 
+    if url.startswith('//'):
+        # A protocol is needed for correct signing
+        if secure:
+            url = 'https:' + url
+        else:
+            url = 'http:' + url
+
     if expires_at is None:
         expires = int(time.time() + expires)
     else:
