@@ -6,7 +6,7 @@ def read(fname):
 
 install_requires = [
     'setuptools',
-    'pycrypto'
+    'pycryptodome'
 ]
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
 
 setup(
     name = 'django-cuddlybuddly-storage-s3',
-    version = '3.2',
+    version = '3.3',
     license = 'BSD',
     description = 'Updated Amazon S3 storage from django-storages. Adds more ' \
                   'fixes than I can remember, a metadata cache system and ' \
